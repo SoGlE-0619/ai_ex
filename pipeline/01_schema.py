@@ -1,8 +1,16 @@
+# github에 내 작업을 단계별로 올리는 방법
+# 1. 깃허브에가서 내가 올리고 싶은 작업의 전용 저장소 URL복사 (private)
+# 2. 내 작업폴더에 터미널 열고 다음 명령어 차례대로 실행
+#  git init
+#  git remote add origin 저장소url
+# 3. 단계별로 기록을 남기고 싶을때마다 파일 저장 -> git add . -> git commit -m "커밋메세지" -> git push origin --all
+
+
 import csv
 from pathlib import Path
 
 # 폴더 구조가 중첩되어 있기 때문에 루트 경로를 변수에 저장
-ROOT = Path(__file__).parent.parent
+ROOT = Path(__file__).resolve().parent.parent
 # 루트경로에서 data폴더가 있는 경로를 다시 변수에 저장
 DATA_DIR = ROOT / "data"
 
@@ -14,5 +22,9 @@ def read_csv(path):
 
 # csv파일을 반복돌면서 read_csv함수 호출해서 각 파일당 필드데이터와 각 row 데이터정보를 출력
 for path in sorted(DATA_DIR.glob("*.csv")):
-  colums, rows = read_csv(path)
-  print(f"\n{path.name} - {len(rows)}행 - {len(colums)}열")
+   columns, rows = read_csv(path)
+
+  # 각 csv파일의 첫번째의 모든 필드값 확인
+for column in columns:
+  value = rows[0][column]
+  print(value)
