@@ -133,3 +133,16 @@ def infer_pk(columns, rows):
         return candidate
 
     return None
+
+# 1. 모든 테이블별 필드, 데이터타입, PK 구하기
+tables = {}
+for path in sorted(DATA_DIR.glob("*.csv")):
+  columns, rows = read_csv(path)
+  tables[path.stem] = {
+    "columns" : columns,
+    "rows" : rows,
+    "type" : {col : infer_type([r[col] for r in rows]) for col in columns},
+    "pk" : infer_pk(columns, rows)
+  }
+
+print(tables)
