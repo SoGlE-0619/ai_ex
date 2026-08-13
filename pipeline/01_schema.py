@@ -44,3 +44,22 @@ def looks_int(text):
   return not (len(body) > 1 and body.startswith("0"))
 
 looks_int("0")
+
+#소수 판별 함수
+def looks_float(text):
+  # float 실수반환되는지 우선 확인
+  try:
+    float(text)
+
+  # 위의 모든 경우가 아니면 실수가 아닌게 확실하니 False반환
+  except ValueError:
+    return False
+
+  # 점이 없으면 실수가 아닌것이므로 최종 확인용
+  if "." not in text:
+    return False
+  
+  # 위의 모든 예외사항 통과하면 얘는 무조건 실수
+  return True
+
+print(looks_float("21.32"))
