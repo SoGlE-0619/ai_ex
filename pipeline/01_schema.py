@@ -94,3 +94,15 @@ def infer_type(values):
     return "DATE"
   
   return "TEXT"
+
+# 모든 csv 파일을 하나씩 검사해서 컬럼명과 각 행의 값의 타입을 분석
+for path in sorted(DATA_DIR.glob("*.csv")):
+  columns, rows = read_csv(path)
+  print(f"\n{path.stem} ({len(rows)})")
+
+  for column in columns:
+    kind = infer_type([r[column] for r in rows])
+
+    example = next((r[column] for r in rows if r[column] != ""),"")
+
+    print(f"{example} : {kind}")
