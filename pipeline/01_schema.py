@@ -6,6 +6,8 @@
 # 3. 단계별로 기록을 남기고 싶을때마다 파일 저장 -> git add . -> git commit -m "커밋메세지" -> git push origin --all
 
 
+# 정규표현식 검사해주는 파이썬 전용 패키지 (import re)
+import re
 import csv
 from pathlib import Path
 
@@ -45,7 +47,7 @@ def looks_int(text):
 
 looks_int("0")
 
-#소수 판별 함수
+# 소수 판별 함수
 def looks_float(text):
   # float 실수반환되는지 우선 확인
   try:
@@ -63,3 +65,13 @@ def looks_float(text):
   return True
 
 print(looks_float("21.32"))
+
+# 날짜 판별 함수
+def looks_date(text):
+  # 정규표현식 
+  # \d (숫자)
+  # \d{갯수} (숫자가 저 갯수만큼 일때)
+  # fullmatch(검증할 정규표현식, 검사할 문자값)
+  return re.fullmatch(r"\d{4}-\d{2}-\d{2}", text) is not None
+
+print(looks_date("2025-03-05"))
