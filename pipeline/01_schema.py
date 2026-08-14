@@ -199,9 +199,9 @@ def build_create(name, table):
 
   for col, owner in table["fks"]:
     print(col)
-    lines.append(f"    FOREIGN KEY ({col}) REFERENCES {owner}({col}")
+    lines.append(f"    FOREIGN KEY ({col}) REFERENCES {owner}({col})")
 
-  return f"CREATE TABLE {name} (\n"+ ".\n".join(lines) + "\n)"
+  return f"CREATE TABLE {name} (\n"+ ",\n".join(lines) + "\n)"
 
 # 현재 모든 테이블명과 테이블정보를 가져와서 자동으로 모든 테이블생성 sql문 확인
 for name, table in tables.items():
@@ -241,7 +241,7 @@ def sort_by_dependency(tables):
         order += [n for n in tables if n not in done]
         break
 
-    return order
+  return order
 
 table_order = sort_by_dependency(tables)
 
@@ -264,9 +264,9 @@ for name in table_order:
   table = tables[name]
   con.execute(build_create(name, table))
 
-  columns = table["column"]
+  columns = table["columns"]
 
-  # 컬럼이 8개면 "?,?,?,?,?,?"
+  # 컬럼이 6개면 "?,?,?,?,?,?"
   # 컬럼의 갯수만큼 ?로 만들어서 ", "로 이어진 무구를 insert문 뒤에 이어붙임
   placeholders = ", ".join("?" for _ in columns)
 
@@ -274,6 +274,29 @@ for name in table_order:
   values = [
     # 테이블의 컬럼명을 다 뽑아서 convset함수의 각각 value값과 변환되야 하는 타입을 지정
     # 튜플(타입으로 변환된 value1, value2)
-    tuple(convert(row[col],table["type"]) for col in columns) # 한 행을 타입에 맞게 바꿔 튜플로 저장
+    tuple(convert(row[col],table["type"][col]) for col in columns) # 한 행을 타입에 맞게 바꿔 튜플로 저장
     for row in table["rows"] # 이걸 모든 행에 대해서 반복처리
   ]
+
+  # INSERT INTO 테이블명 (컬럼,컬럼,컬럼,컬럼) values (값,값,값,값)
+  # INSERT INTO 테이블명 (컬럼,컬럼,컬럼,컬럼) values (?,?,?,?), (값, 값, 값, 값,)
+
+  con.executemany(
+    f"INSERT INTO {name} ({",".join(columns)}) VALUES ({placeholders})", values,
+  )
+
+con.commit()
+
+
+# ===== 생성된 테이블과 데이터 확인 =====
+
+# sqlite_master는 sqlite가 내부적으로 관리하는 시스템 테이블
+# 여기에 CREATE로 만들어진 테이블/인덱스 정보가 모두 들어있음
+# type = 'table' 조건으로 테이블만 골라내고, sqlite_%는 sqlite 내부 테이블이라 제외
+created = con.execute("""
+  SELECT name FROM sqlite_master
+  WHERE type = 'table' AND name NOT LIKE 'sqlite_%'
+  ORDER BY name
+""").fetchall()
+
+print(created)
