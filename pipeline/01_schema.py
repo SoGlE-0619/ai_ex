@@ -285,6 +285,18 @@ for name in table_order:
     f"INSERT INTO {name} ({",".join(columns)}) VALUES ({placeholders})", values,
   )
 
+for col, _owner in table['fks']:
+    # 예) idx_purchases_customer_id
+    con.execute(f"CREATE INDEX idx_{name}_{col} on {name}({col})")
+
+for name in table_order:
+    n = con.execute(f"SELECT COUNT(*) FROM {name}").fetchone()[0]
+    print(f"    SELECT COUNT(*) FROM {name:16s} → {n:>6}")
+
+broken = con.execute("PRAGMA foreign_key_check").fetchall()
+print(broken)
+
+
 con.commit()
 
 
@@ -300,3 +312,11 @@ created = con.execute("""
 """).fetchall()
 
 print(created)
+
+
+# 외래키에 인덱싱을 하는 이유
+# 특정 정보값에 연결되어 있는 외래키의 정보가 많은 경우 (대표적으로 고객정보)
+# 상품을 구매한 특정 고객의 정보를 찾을 때 그 상품을 구매한 고객정보 참조 테이블에서 수많은 고객정보를 매번 탐색해야됨
+# 애초에 외래키 연결 시 각각의 정보에 인덱스를 붙임 (등가교환 저장할 땐 시간이 조금 더 걸리지만 찾을 땐 빠름)
+
+con.close()
