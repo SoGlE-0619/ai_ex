@@ -243,5 +243,37 @@ def sort_by_dependency(tables):
 
     return order
 
-  table_order = sort_by_dependency(tables)
-  print(table_order)
+table_order = sort_by_dependency(tables)
+
+
+  # 각 필드의 데이터의 타입에 맞게 변환해주는 함수
+def convert(value, kind):
+    if value == "":
+      return None
+
+    if kind == "INTEGER":
+      return int(value)
+
+    if kind == "FLOAT":
+      return float(value)
+
+    return value
+
+# 앞에서 정산 테이블 생성 순서대로 데이터 저장
+for name in table_order:
+  table = tables[name]
+  con.execute(build_create(name, table))
+
+  columns = table["column"]
+
+  # 컬럼이 8개면 "?,?,?,?,?,?"
+  # 컬럼의 갯수만큼 ?로 만들어서 ", "로 이어진 무구를 insert문 뒤에 이어붙임
+  placeholders = ", ".join("?" for _ in columns)
+
+  # 모든 행을 각각의 (값, 값, 값) 튜플의 목록으로 만들어 이어붙임
+  values = [
+    # 테이블의 컬럼명을 다 뽑아서 convset함수의 각각 value값과 변환되야 하는 타입을 지정
+    # 튜플(타입으로 변환된 value1, value2)
+    tuple(convert(row[col],table["type"]) for col in columns) # 한 행을 타입에 맞게 바꿔 튜플로 저장
+    for row in table["rows"] # 이걸 모든 행에 대해서 반복처리
+  ]
