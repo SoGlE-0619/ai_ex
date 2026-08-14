@@ -160,9 +160,9 @@ for name, table in tables.items(): # 표 이름과 내용을 그룹으로 꺼냄
       continue
 
     #fks란 빈 배열에 FK,테이블 명 저장
-    fks.append((name, col, owner))
+    fks.append((col, owner))
 
-    table["fks"] = fks
+  table["fks"] = fks
 # 지금까지 생성한 정보로 테이블 생성하는 sql구문 생성 함수
 # CREATE TABLE purchases (
 #   purchase_id TEXT PRIMARY KEY,
@@ -183,6 +183,7 @@ def build_create(name, table):
     lines.append(piece)
 
   for col, owner in table["fks"]:
+    print(col)
     lines.append(f"    FOREIGN KEY ({col}) REFERENCES {owner}({col}")
 
   return f"CREATE TABLE {name} (\n"+ ".\n".join(lines) + "\n)"
