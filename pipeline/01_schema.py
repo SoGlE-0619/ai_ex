@@ -2,11 +2,22 @@
 import re
 import csv
 from pathlib import Path
+import sqlite3
+
 
 # 폴더 구조가 중첩되어 있기 때문에 루트 경로를 변수에 저장
 ROOT = Path(__file__).resolve().parent.parent
 # 루트경로에서 data폴더가 있는 경로를 다시 변수에 저장
 DATA_DIR = ROOT / "data"
+
+# db파일 생성위치 지정
+db_file = ROOT / "cosmetic.db"
+
+if db_file.exists():
+  db_file.unlink()
+
+# 해당 구문이 실행되는 순간 자동적으로 db파일이 없으면 자동 생성되며 연결
+con = sqlite3.connect(db_file)
 
 # 인자로 csv파일이 있는 패스 경로를 전달하면 각 파일의 필드명만 리스트형태로 반환하는 함수
 def read_csv(path):
