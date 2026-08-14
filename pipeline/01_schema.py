@@ -19,6 +19,10 @@ if db_file.exists():
 # 해당 구문이 실행되는 순간 자동적으로 db파일이 없으면 자동 생성되며 연결
 con = sqlite3.connect(db_file)
 
+# 외래키 검사 설정
+# PRAGMA는 sqlite 자체 설정을 변경하는 구문, 연결때마다 활성화 시켜야함
+con.execute("PRAGMA foreign_keys = ON")
+
 # 인자로 csv파일이 있는 패스 경로를 전달하면 각 파일의 필드명만 리스트형태로 반환하는 함수
 def read_csv(path):
   with open(path, encoding="utf-8", newline="") as f:
