@@ -8,3 +8,7 @@ ROOT = Path(__file__).resolve().parent.parent
 
 # 루트 경로에서 하위 data폴더 경로를 이어 붙여 csv 파일이 있는 절대 경로값 변수에 저장
 DATA_DIR = ROOT / "data"
+
+# 테이블이 저장될 DB파일명과 위치를 변수에 등록
+# cosmetic.db란 이름으로 db파일을 루트 경로안쪽에 생성하고 문자열로 변환해서 변수에 등록
+DB_PATH = str(ROOT / "cosmetic.db")

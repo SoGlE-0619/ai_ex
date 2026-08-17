@@ -1,11 +1,12 @@
 import csv
 import re
+import sqlite3
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from app.config import DATA_DIR
+from app.config import DATA_DIR, DB_PATH
 
 # csv 파일정보 반환 함수
 def read_csv(path):
@@ -75,44 +76,21 @@ def owner_of(column, tables):
 
 
 # 테이블 생성 sql문 호출시 먼저 생성되야 하는 테이블 순서 반환하는 함수
-# 테이블은 크게 참조당하는 테이블, 참조하는 테이블이 있다
-# 참조당하는 테이블이 먼저 생성되어야 이후 해당 테이블을 참조하는 테이블 생성 sql문이 실행됐을때 오류나지 않음
-# 핵심은 참조당하는 테이블이 무조건 먼저 테이블 생성 sql이 실행되도록 해야함
-# 참조당하는 테이블을 찾는 가장 간단한 방법은 해당 테이블 정보의 fks값이 비어있는 테이블을 찾으면 됨
 def sort_by_dependency(tables):
-  done = set() # set()은 중복을 허용하지 않는 값 모음(실제 값을 담기위함보다는 특정 조건에 부합되는 값이 목록에 있는지 빠르게 판별하기 위한 용도)
-  order = [] # 실제 순서대로 실행되어야할 테이블명이 등록될 빈 리스트
-
-  # 전체 테이블갯수와 orderd에 담길 테이블 갯수가 같아질떄까지 무한 반복처리
+  done = set() 
+  order = [] 
   while len(order) < len(tables):
-    # 무한 반복시 모든 정보가 담기면 반복을 끊어주기위한 구분 값
     moved = False
-
-    # 각 테이블 정보에서 테이블 이름, 테이블 정보를 추출
     for name, table in tables.items():
-      # 일단 반복도는 테이블 명이 done에 담겨있는지 빠르게 확인 (순서에 테이블명이 담겨있는지 scan이 아닌 빠르게 search하기 위한 용도)
-      # 만약 true면 이미 해당 테이블명(name)은 이미 순서에 등록된 값이기에 무시하고 넘어감
       if name in done:
         continue
-
-      # 이번엔 현재 반복도는 테이블 정보의 외래키정보를 반복돌며 해당 참조 테이블명이 있는지 확인
-      # 해당 all구문은 (값이 모두 참이거나, 값이 하나도 없으면 최종 True 판단됨)
-      # 결국 아래 조건식은 지금 반복도는 테이블 정보에서 fks에 외래키 정보가 하나도 없을때만 참이되어 안쪽 코드블록이 실행됨
-      if all(owner in done for _, owner in table["fks"]):
-        # 위의 조건에서 외래키가 하나도 없는 테이블은 결국 참조당하는 테이블이므로 order 리스트에 담고
-        order.append(name)
-        # 다음번 루프때 빠른 판단을 위해 done에도 담아줌
+      if all(owner in done for _, owner in table["fks"]):  
+        order.append(name)   
         done.add(name)
-        # 그리고 이번 루프에서 order에 테이블 순서를 하나 담았기 때문에 moved=True로 변경하여 아래쪽 조건이 아닌 다시 루프 처음으로 돌아가게 처리
         moved = True
-
-    # 결국 위의 조건에서 우선적으로 참조 당하는 모든 테이블명이 order 순서에 담기고 나면 비로서 이곳의 if문이 실행됨
-    if not moved:
-      # done에 담겨있지 않는 테이블명은 모두 참조하는 테이블명이므로 모두 order의  뒤쪽에 테이블 명을 추가하고 종료
+    if not moved:  
       order += [n for n in tables if n not in done]
       break
-  
-  # 이런식으로 완성된 테이블 순서 리스트를 반환
   return order
 
 
@@ -145,5 +123,22 @@ for name, table in tables.items():
 
 # 3. 실제 순서되로 실행되어야할 테이블명 리스트 확인
 table_order = sort_by_dependency(tables)
-print(table_order)
-# 결과값 ['customers', 'products', 'purchases', 'product_details'] 내부에 외래키가 없는 참조당하는 테이블이 제일 앞쪽의 순번으로 등록되어 있는 것을 확인
+
+
+# 4. DB접속 및 테이블이 생성될 DB파일 만들기
+# 상단에 config로 부터 DB_PATH경로를 가져온뒤 다시 Path 모듈로 객체로 변환해서 db_file변수에 저장
+db_file = Path(DB_PATH)
+
+# 만약 db파일이 존재하면 기존 db파일은 unlink로 삭제
+# 생성한 db파일을 굳이 다시 삭제하는 이유는 테스트도중 CSV파일이 변경될때마다 기존 DB와 새롭게 생긴 DB의 구조가 달라서 생기는 오류를 미리 방지하기 위함
+if db_file.exists():
+  db_file.unlink()
+
+# db파일이 생성되면 이제 실제 파이썬 내장 DB인 sqlite3를 불러와 실제 db접속 및 외래키 검사 활성화
+# sqlite3.connect()는 DB파일에 연결하며 만약 해당 경로에 파일이 없으면 파일을 새로 생성
+# 이후 반환된 인스턴스 객체 con을 활용해 sql문을 실행해 db에 적용 가능
+con = sqlite3.connect(db_file)
+
+# execute()는 SQL문장을 실행하는 메서드, 여기서는 외래키 검사 기능을 활성화 시키는 명령을 수행
+# 이제 해당 실행 파일을 호출하면 루트 경로에 db파일이 생성되면 성공
+con.execute("PRAGMA foreign_keys = ON")
