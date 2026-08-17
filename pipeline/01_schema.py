@@ -5,6 +5,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from app.config import DATA_DIR
+
 # csv 파일정보 반환 함수
 def read_csv(path):
   with open(path, encoding="utf-8", newline="") as f:
@@ -71,5 +73,21 @@ def infer_pk(columns, rows):
       return col
   # 만약 위의 조건에 걸러지는게 하나도 없으면 결국 PK가 없는 것이므로 None반환
   return None
+
+
+# 실제 infer_pk를 통해 CSV파일의 PK알아내기
+# 준비물 해당 함수에 들어갈 columns, rows 데이터 필요 (read_csv 함수 활용)
+
+# 먼저 인자로 전달할 colums, rows 데이터 추출
+columns, rows = read_csv(DATA_DIR / "customers.csv")
+
+print(columns) # 리스트 형태로 컬럼값 확인
+print(rows[0]) # rows 데이터 행이 많으므로 첫번째 행만 확인
+
+# 이제 실해 해당 정보 2개를 인자로 전달해서 PK찾기
+pk_name = infer_pk(columns, rows)
+print(pk_name) # 결국 customers.csv파일 데이터에서의 PK명은 customer_id인것을 확인 가능
+
+
 
 
