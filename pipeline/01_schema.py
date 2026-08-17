@@ -1,4 +1,5 @@
 import csv
+import re # 정규식 검사를 위한 파이썬 내장 모듈 import
 import sys
 from pathlib import Path
 
@@ -21,21 +22,21 @@ def looks_int(text):
 
 # 문자열을 실수로 저장해도 되는지 판단 함수
 def looks_float(text):
-  # float()을 통해 문자열을 소수형 실수로 변경, 바꿀수 없으면 ValueError가 발생
   try:
     float(text)
-  # ValueError 발생시 False 반환
   except ValueError:
     return False
-  # 이후 안전을 위해 해당 실수에 "."이 있는지 추가로 확인해서 해당 조 건까지 통과하면 True반환
   return "." in text
 
-# 실제 동작 테스트
-print(looks_float("13.5")) # True
-print(looks_float("13")) # False
-print(looks_float(".13.5")) # False
-  
 
+# 문자열이 YYYY-MM-DD 모양인지 판단 함수
+def looks_date(text):
+  # 상단에 import한 re 정규식 모듈의 내장 메서드인 fullmatch 호출
+  # fullmatch(정규표현식 검사, 검사할 문자열) -> True, False 반환
+  # r"정규표현식 시작" \d{갯수} \d -시작 문자열이 숫자인지 판단 이후 중괄호의 갯수만큼 반복되는지 확인 이후 "-"이 있는지 확인
+  # 결국 무조건 숫자4개-숫자2개-숫자2개 이런식이면 True반환, 그렇지 않으면 None으로 처리해서 False반환
+  return re.fullmatch(r"\d{4}-\d{2}-\d{2}", text) is not None
 
-
-
+# 테스트 호출
+print(looks_date("2025-02-04")) # True
+print(looks_date("2024-1-4")) # False
