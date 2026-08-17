@@ -74,6 +74,48 @@ def owner_of(column, tables):
   return None
 
 
+# 테이블 생성 sql문 호출시 먼저 생성되야 하는 테이블 순서 반환하는 함수
+# 테이블은 크게 참조당하는 테이블, 참조하는 테이블이 있다
+# 참조당하는 테이블이 먼저 생성되어야 이후 해당 테이블을 참조하는 테이블 생성 sql문이 실행됐을때 오류나지 않음
+# 핵심은 참조당하는 테이블이 무조건 먼저 테이블 생성 sql이 실행되도록 해야함
+# 참조당하는 테이블을 찾는 가장 간단한 방법은 해당 테이블 정보의 fks값이 비어있는 테이블을 찾으면 됨
+def sort_by_dependency(tables):
+  done = set() # set()은 중복을 허용하지 않는 값 모음(실제 값을 담기위함보다는 특정 조건에 부합되는 값이 목록에 있는지 빠르게 판별하기 위한 용도)
+  order = [] # 실제 순서대로 실행되어야할 테이블명이 등록될 빈 리스트
+
+  # 전체 테이블갯수와 orderd에 담길 테이블 갯수가 같아질떄까지 무한 반복처리
+  while len(order) < len(tables):
+    # 무한 반복시 모든 정보가 담기면 반복을 끊어주기위한 구분 값
+    moved = False
+
+    # 각 테이블 정보에서 테이블 이름, 테이블 정보를 추출
+    for name, table in tables.items():
+      # 일단 반복도는 테이블 명이 done에 담겨있는지 빠르게 확인 (순서에 테이블명이 담겨있는지 scan이 아닌 빠르게 search하기 위한 용도)
+      # 만약 true면 이미 해당 테이블명(name)은 이미 순서에 등록된 값이기에 무시하고 넘어감
+      if name in done:
+        continue
+
+      # 이번엔 현재 반복도는 테이블 정보의 외래키정보를 반복돌며 해당 참조 테이블명이 있는지 확인
+      # 해당 all구문은 (값이 모두 참이거나, 값이 하나도 없으면 최종 True 판단됨)
+      # 결국 아래 조건식은 지금 반복도는 테이블 정보에서 fks에 외래키 정보가 하나도 없을때만 참이되어 안쪽 코드블록이 실행됨
+      if all(owner in done for _, owner in table["fks"]):
+        # 위의 조건에서 외래키가 하나도 없는 테이블은 결국 참조당하는 테이블이므로 order 리스트에 담고
+        order.append(name)
+        # 다음번 루프때 빠른 판단을 위해 done에도 담아줌
+        done.add(name)
+        # 그리고 이번 루프에서 order에 테이블 순서를 하나 담았기 때문에 moved=True로 변경하여 아래쪽 조건이 아닌 다시 루프 처음으로 돌아가게 처리
+        moved = True
+
+    # 결국 위의 조건에서 우선적으로 참조 당하는 모든 테이블명이 order 순서에 담기고 나면 비로서 이곳의 if문이 실행됨
+    if not moved:
+      # done에 담겨있지 않는 테이블명은 모두 참조하는 테이블명이므로 모두 order의  뒤쪽에 테이블 명을 추가하고 종료
+      order += [n for n in tables if n not in done]
+      break
+  
+  # 이런식으로 완성된 테이블 순서 리스트를 반환
+  return order
+
+
 # 1. 모든 테이블별 필드, 데이터타입, PK값 정보 저장하는 실행문
 tables = {}
 for path in sorted(DATA_DIR.glob("*.csv")): 
@@ -87,36 +129,21 @@ for path in sorted(DATA_DIR.glob("*.csv")):
 
 
 # 2. 특정 테이블에 연결되어 있는 외래키 정보 찾아 기존 tables 정보에 추가
-
-# 먼저 위에서 각 csv파일에서 추출해 모아놓은 tables정보에서 name(테이블명), table(테이블정보)를 내부로 반복해서 전달
 for name, table in tables.items():
-  # 각 테이블에 리스트 형식을 외래키 정보가 담길 빈 리스트 생성
   fks = []
-
-  # 각 테이블의 컬럼명을 하나씩 뽑아서 조건 비교 시작
   for col in table["columns"]:
-    # 만약 컬럼명이 _id로 끝나지 않으면 PK, FK 둘다 아니므로 무시하고 넘어감
     if not col.endswith("_id"):
       continue
-    
-    # 현재 컬럼명이 가르키는 참조당하는 테이블이 있는지 확인
     owner = owner_of(col, tables)
-    # 만약 참조당하는 테이블이 없거나 해당 참조테이블 명과 현재 테이블명이 같으면 그건 PK이므로 무시하고 넘어감
     if not owner or owner == name:
-      continue
-    
-    # 참조당하는 테이블의 PK값이 현재의 col명과 동일하지 않으면 그건 FK이므로 통과 
+      continue  
     if tables[owner]["pk"] != col:
       continue
-    
-    # 위의 조건에 통과된 FK인 컬럼명과 해당 외래키가 가르키는 참조 테이블 명을 괄호로 묶어서 리스트 형태로 담음
     fks.append((col, owner))
-
-  # 위에서 만들어진 fks 리스트 정보를 기존 테이블에 "fks"라는 추가 키를 만들어서 등록
   table["fks"] = fks
 
-# 그럼 위에서 만들어진 fks키가 기존 테이블에 추가되고 그 안에 외래키 정보가 있는지 직접 확인
 
-print(tables["purchases"]["fks"]) # 전체 tables정보에서 purchases테이블 정보만 찾고 다시 거기에서 fks키값의 정보를 출력
-# 실행하면 아래와 같이 purchases테이블 안에는 customers 테이블을 참조하는 customer_id라는 외래키와 products 테이블을 참조하는 product_id 외래키 2개가 있음을 확인 가능
-# [('customer_id', 'customers'), ('product_id', 'products')]
+# 3. 실제 순서되로 실행되어야할 테이블명 리스트 확인
+table_order = sort_by_dependency(tables)
+print(table_order)
+# 결과값 ['customers', 'products', 'purchases', 'product_details'] 내부에 외래키가 없는 참조당하는 테이블이 제일 앞쪽의 순번으로 등록되어 있는 것을 확인
