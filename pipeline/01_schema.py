@@ -94,6 +94,49 @@ def sort_by_dependency(tables):
   return order
 
 
+# 지금까지 생성한 csv정보로 실제 테이블 생성 SQL문 반환 함수
+# 아래와 같은 각 테이블명 SQL문을 자동으로 생성하는 함수 제작
+# 아래 SQL문 구조를 보면 크게 4단계로 구분됨 (CREATE 구문, PRIMARY KEY가 지정된 줄, FK지정된 줄, 그외 나머지 구문 )
+# build_create("purchases", tables["purchases"])의 결과 예시
+# CREATE TABLE purchases (
+#     purchase_id TEXT PRIMARY KEY,
+#     customer_id TEXT,
+#     product_id TEXT,
+#     purchased_at DATE,
+#     quantity INTEGER,
+#     rating INTEGER,
+#     review TEXT,
+#     is_holdout INTEGER,
+#     FOREIGN KEY (customer_id) REFERENCES customers(customer_id),
+#     FOREIGN KEY (product_id) REFERENCES products(product_id)
+# )
+def build_create(name, table):
+  # 첫번쨰 인자로 테이블명, 두번째 인자로 테이블 정보가 전달됨
+  # 각 sql문 줄의 구문이 담길 빈 리스트 생성
+  lines = []
+
+  for col in table["columns"]:
+    # 아래 구문은 PK, FK가 없는 일반 필드 생성하는 구문 앞쪽에 빈칸을 일부러 4칸 띄어서 위의 구조를 맞춤
+    piece = f"    {col} {table['type'][col]}"
+
+    # 만약 현재 반복도는 컬럼이 PK로 지정되어 있으면 해당 필드명 뒤에 PRIMARY KEY 문자값 더해서 이어붙임
+    if col == table["pk"]:
+      piece += " PRIMARY KEY"
+
+    # 여기까지 하면 외래키 지정하는 필드를 제외하곤 모든 필드 생성 sql문이 list형태로 담기게됨
+    lines.append(piece)
+
+  # 이젠 나머지 외래키 연결하는 구문 생성
+  for col, owner in table["fks"]:
+    # 해당 컬럼에 외래키가 있으면 외래키 갯수만큼 반복돌며 해당 외래키명과 참조하는 테이블 명을 sql문에 추가
+    lines.append(f"    FOREIGN KEY ({col}) REFERENCES {owner}({col})")
+
+  # 최종적으로 f-string으로 제일 첫줄인 CREATE TABLE 테이블명 문구를 생성
+  # 이어서 lines 리스트에 모아놓은 각 필드 생성 sql문을 ,줄바꿈하면서 이어붙임
+  # 마지막으로 줄바꿈하고 괄호를 붙여주면 하나의 테이블 SQL문 완성됨
+  return f"CREATE TABLE {name} (\n" + ",\n".join(lines) + "\n)"
+
+
 # 1. 모든 테이블별 필드, 데이터타입, PK값 정보 저장하는 실행문
 tables = {}
 for path in sorted(DATA_DIR.glob("*.csv")): 
@@ -126,19 +169,19 @@ table_order = sort_by_dependency(tables)
 
 
 # 4. DB접속 및 테이블이 생성될 DB파일 만들기
-# 상단에 config로 부터 DB_PATH경로를 가져온뒤 다시 Path 모듈로 객체로 변환해서 db_file변수에 저장
 db_file = Path(DB_PATH)
 
-# 만약 db파일이 존재하면 기존 db파일은 unlink로 삭제
-# 생성한 db파일을 굳이 다시 삭제하는 이유는 테스트도중 CSV파일이 변경될때마다 기존 DB와 새롭게 생긴 DB의 구조가 달라서 생기는 오류를 미리 방지하기 위함
 if db_file.exists():
   db_file.unlink()
 
-# db파일이 생성되면 이제 실제 파이썬 내장 DB인 sqlite3를 불러와 실제 db접속 및 외래키 검사 활성화
-# sqlite3.connect()는 DB파일에 연결하며 만약 해당 경로에 파일이 없으면 파일을 새로 생성
-# 이후 반환된 인스턴스 객체 con을 활용해 sql문을 실행해 db에 적용 가능
 con = sqlite3.connect(db_file)
-
-# execute()는 SQL문장을 실행하는 메서드, 여기서는 외래키 검사 기능을 활성화 시키는 명령을 수행
-# 이제 해당 실행 파일을 호출하면 루트 경로에 db파일이 생성되면 성공
 con.execute("PRAGMA foreign_keys = ON")
+
+
+# 5. 이전에 만든 테이블 생성 순서 리스트 반복 돌며 SQL문 자동 생성
+for name in table_order:
+  table = tables[name]
+
+  combined_sql = build_create(name, table)
+
+  print(combined_sql)
