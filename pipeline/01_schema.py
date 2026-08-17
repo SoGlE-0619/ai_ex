@@ -13,19 +13,28 @@ def read_csv(path):
   
 # 문자열을 정수로 저장해도 되는지 판단 함수
 def looks_int(text):
-  # 먼저 검사할 숫자가 음수면 파이썬은 정수라고 인지를 못하기 때문에 먼저 앞의 -기호 제거
-  body = text[1:] if text.startswith("-") else text
-  # isdigit()은 문자열의 모든 글자가 숫자형일때 True 반환
+  body = text[1:] if text.startswith("-") else text  
   if not body.isdigit():
     return False
-  # 위의 조건을 모두 만족했을때 숫자로 남은 글자가 1글자 이상이어야 하고 0으로 시작하지 않아야 숫자로 인정해 True반환
-  # 0으로 시작하는 숫자를 정수로 인정하지 않는 이유는 보통 "001, 002같은 경우는 고객 고유 번호로 활용되므로 숫자처리하면 안되기 때문"
   return not (len(body) > 1 and body.startswith("0"))
 
-# 실제 테스트
-print(looks_int("34")) # True
-print(looks_int("004")) # False
 
+# 문자열을 실수로 저장해도 되는지 판단 함수
+def looks_float(text):
+  # float()을 통해 문자열을 소수형 실수로 변경, 바꿀수 없으면 ValueError가 발생
+  try:
+    float(text)
+  # ValueError 발생시 False 반환
+  except ValueError:
+    return False
+  # 이후 안전을 위해 해당 실수에 "."이 있는지 추가로 확인해서 해당 조 건까지 통과하면 True반환
+  return "." in text
+
+# 실제 동작 테스트
+print(looks_float("13.5")) # True
+print(looks_float("13")) # False
+print(looks_float(".13.5")) # False
+  
 
 
 
