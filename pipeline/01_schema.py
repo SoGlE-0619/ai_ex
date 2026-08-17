@@ -1,5 +1,5 @@
 import csv
-import re # 정규식 검사를 위한 파이썬 내장 모듈 import
+import re
 import sys
 from pathlib import Path
 
@@ -31,12 +31,30 @@ def looks_float(text):
 
 # 문자열이 YYYY-MM-DD 모양인지 판단 함수
 def looks_date(text):
-  # 상단에 import한 re 정규식 모듈의 내장 메서드인 fullmatch 호출
-  # fullmatch(정규표현식 검사, 검사할 문자열) -> True, False 반환
-  # r"정규표현식 시작" \d{갯수} \d -시작 문자열이 숫자인지 판단 이후 중괄호의 갯수만큼 반복되는지 확인 이후 "-"이 있는지 확인
-  # 결국 무조건 숫자4개-숫자2개-숫자2개 이런식이면 True반환, 그렇지 않으면 None으로 처리해서 False반환
   return re.fullmatch(r"\d{4}-\d{2}-\d{2}", text) is not None
 
-# 테스트 호출
-print(looks_date("2025-02-04")) # True
-print(looks_date("2024-1-4")) # False
+
+# 한 컬럼의 값들을 보고 알맞은 DB 타입 반환 함수
+def infer_type(values):
+  # values로 들어온 컬럼값 리스트를 반복돌며 일단 값이 없으면 제외하고 리스트로 담음
+  seen = [v for v in values if v != ""]
+
+  # 혹시 값이 모두 비어있으면 무조건 "TEXT"타입 반환 (빈 문자열로 문자이기 때문)
+  if not seen:
+    return "TEXT"
+  # 리스트에 있는 모든 값을 looks_int함수로 검사해서 모두 숫자여야지만 "INTEGER"타입 반환
+  if all(looks_int(v) for v in seen):
+    return "INTEGER"
+  # 리스트에 있는 모든 값을 looks_float함수로 검사해서 모두 숫자여야지만 "FLOAT"타입 반환
+  if all(looks_float(v) for v in seen):
+    return "FLOAT"
+  # 리스트에 있는 모든 값을 looks_date함수로 검사해서 모두 날짜형태여야만 "DATE"타입 반환
+  if all(looks_date(v) for v in seen):
+    return "DATE"
+  # 그 외에 모든 경우는 "TEXT" 타입처리
+  return "TEXT"
+
+# 실제 테스트 호출
+print(infer_type(["10", "20", "30"])) # 만약 컬럼값이 물건 구매 수량일경우 -> INTEGER
+print(infer_type(["007", "008", "009"])) # 만약 컬럼값이 고객 고유 id값을 경우 -> TEXT
+print(infer_type(["2024-03-04", "2024-04-05"])) # 만약 컬럼값이 고객이 물품을 구매한 날짜인 경우 -> DATE
