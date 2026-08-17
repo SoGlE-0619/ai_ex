@@ -1,11 +1,10 @@
-"""설정 - 프로그램 전체가 함께 쓰는 값을 여기 모은다.
+# 이번에 진행할 작업 - 공통으로 쓸 경로 변수에 등록
 
-다음의 정보값 등록 예정
-ROOT = 해당 작업폴더의 루트 경로
-DATA_DIR = csv파일이 있는 경로
-DB_PATH = csv파일로 변환된 실제 DB파일 경로
+# 문자열인 경로값을 객체로 다룰수 있게 해주는 모듈
+from pathlib import Path
 
-EMBED_TOKENIZER = 텍스트 데이터를 벡터라이징하기 위한 임베딩 모델명
-EMBED_MAX_TOKENS = 임베딩 모델의 최대 전달 토큰 수
+# Path객체 내장 메서드로 현재 파일이 위치한 경로를 가져와서 다시 resolve로 절대경로로 펴고 두번 상위로 올라와서 루트 경로를 변수에 담음
+ROOT = Path(__file__).resolve().parent.parent
 
-"""
+# 루트 경로에서 하위 data폴더 경로를 이어 붙여 csv 파일이 있는 절대 경로값 변수에 저장
+DATA_DIR = ROOT / "data"
