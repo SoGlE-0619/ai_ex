@@ -95,45 +95,18 @@ def sort_by_dependency(tables):
 
 
 # 지금까지 생성한 csv정보로 실제 테이블 생성 SQL문 반환 함수
-# 아래와 같은 각 테이블명 SQL문을 자동으로 생성하는 함수 제작
-# 아래 SQL문 구조를 보면 크게 4단계로 구분됨 (CREATE 구문, PRIMARY KEY가 지정된 줄, FK지정된 줄, 그외 나머지 구문 )
-# build_create("purchases", tables["purchases"])의 결과 예시
-# CREATE TABLE purchases (
-#     purchase_id TEXT PRIMARY KEY,
-#     customer_id TEXT,
-#     product_id TEXT,
-#     purchased_at DATE,
-#     quantity INTEGER,
-#     rating INTEGER,
-#     review TEXT,
-#     is_holdout INTEGER,
-#     FOREIGN KEY (customer_id) REFERENCES customers(customer_id),
-#     FOREIGN KEY (product_id) REFERENCES products(product_id)
-# )
 def build_create(name, table):
-  # 첫번쨰 인자로 테이블명, 두번째 인자로 테이블 정보가 전달됨
-  # 각 sql문 줄의 구문이 담길 빈 리스트 생성
   lines = []
 
   for col in table["columns"]:
-    # 아래 구문은 PK, FK가 없는 일반 필드 생성하는 구문 앞쪽에 빈칸을 일부러 4칸 띄어서 위의 구조를 맞춤
     piece = f"    {col} {table['type'][col]}"
-
-    # 만약 현재 반복도는 컬럼이 PK로 지정되어 있으면 해당 필드명 뒤에 PRIMARY KEY 문자값 더해서 이어붙임
     if col == table["pk"]:
       piece += " PRIMARY KEY"
-
-    # 여기까지 하면 외래키 지정하는 필드를 제외하곤 모든 필드 생성 sql문이 list형태로 담기게됨
     lines.append(piece)
 
-  # 이젠 나머지 외래키 연결하는 구문 생성
   for col, owner in table["fks"]:
-    # 해당 컬럼에 외래키가 있으면 외래키 갯수만큼 반복돌며 해당 외래키명과 참조하는 테이블 명을 sql문에 추가
     lines.append(f"    FOREIGN KEY ({col}) REFERENCES {owner}({col})")
 
-  # 최종적으로 f-string으로 제일 첫줄인 CREATE TABLE 테이블명 문구를 생성
-  # 이어서 lines 리스트에 모아놓은 각 필드 생성 sql문을 ,줄바꿈하면서 이어붙임
-  # 마지막으로 줄바꿈하고 괄호를 붙여주면 하나의 테이블 SQL문 완성됨
   return f"CREATE TABLE {name} (\n" + ",\n".join(lines) + "\n)"
 
 
@@ -184,4 +157,23 @@ for name in table_order:
 
   combined_sql = build_create(name, table)
 
-  print(combined_sql)
+  # 이제 위에 최종적으로 만들어진 sql문을 통해 실제 db파일에 테이블 생성
+  con.execute(combined_sql)
+
+  # 이제 해당 디비파일에 테이블이 생성되었는지 확인
+  # sqlite_master 테이블 안에 우리가 만든 커스텀 테이블이 들어가는 구조이므로 해당 테이블에서 생성된 타입이 테이블인것만 찾아서 해당 테이블명과 생성 sql문을 반환
+  db_info = con.execute("SELECT name, sql FROM sqlite_master WHERE type='table'")
+
+  # for tb_name, tb_sql in db_info:
+  #   print(tb_name)
+  #   print(tb_sql)
+
+  
+# customers 테이블에서의 각 컬럼별 상세 정보 확인 (특정 테이블 하나의 컬럼 정보만 확인하기 위해 반복문 코드블록에서 빠져나옴)
+print(con.execute("PRAGMA table_info(customers)").fetchall())
+# 총 9개의 필드값 정보를 확인할 수 있으며 각 ()안의 정보 순서는 다음과 같음
+# 각 컬럼 순서, 컬럼이름, 컬럼에 들어갈 타입, not null 유무, 디폴트값 유무, pk유무
+# (0, 'customer_id', 'TEXT', 0, None, 1),
+# 첫번째 필드순서인 0번째 컬럼명은 customer_id이고 text타입이며, not null이 0이므로 무조건 값이 지정되야함, 디폴트값은 None이므로 없고, pk유무는 1이므로 해당 컬럼이 PK임
+  
+
