@@ -110,6 +110,17 @@ def build_create(name, table):
   return f"CREATE TABLE {name} (\n" + ",\n".join(lines) + "\n)"
 
 
+# 실제 생성된 테이블에 데이터 저장할때 각 컬럼별 자료형에 맞게 문자열의 데이터 타입을 변환하는 함수
+def convert(value, kind):
+  if value == "":
+    return None
+  if kind == "INTEGER":
+    return int(value)
+  if kind == "FLOAT":
+    return float(value)
+  return value
+
+
 # 1. 모든 테이블별 필드, 데이터타입, PK값 정보 저장하는 실행문
 tables = {}
 for path in sorted(DATA_DIR.glob("*.csv")): 
@@ -151,29 +162,39 @@ con = sqlite3.connect(db_file)
 con.execute("PRAGMA foreign_keys = ON")
 
 
-# 5. 이전에 만든 테이블 생성 순서 리스트 반복 돌며 SQL문 자동 생성
+# 5. 이전에 만든 테이블 생성 순서 리스트 반복 돌며 SQL문 자동 생성후 테이블 데이터 저장
 for name in table_order:
   table = tables[name]
 
   combined_sql = build_create(name, table)
-
-  # 이제 위에 최종적으로 만들어진 sql문을 통해 실제 db파일에 테이블 생성
   con.execute(combined_sql)
 
-  # 이제 해당 디비파일에 테이블이 생성되었는지 확인
-  # sqlite_master 테이블 안에 우리가 만든 커스텀 테이블이 들어가는 구조이므로 해당 테이블에서 생성된 타입이 테이블인것만 찾아서 해당 테이블명과 생성 sql문을 반환
-  db_info = con.execute("SELECT name, sql FROM sqlite_master WHERE type='table'")
+  columns = table["columns"]
+  placeholders = ", ".join("?" for _ in columns)
 
-  # for tb_name, tb_sql in db_info:
-  #   print(tb_name)
-  #   print(tb_sql)
+  values = [
+    tuple(convert(row[col], table["type"][col]) for col in columns) 
+    for row in table["rows"] 
+  ]
 
-  
-# customers 테이블에서의 각 컬럼별 상세 정보 확인 (특정 테이블 하나의 컬럼 정보만 확인하기 위해 반복문 코드블록에서 빠져나옴)
-print(con.execute("PRAGMA table_info(customers)").fetchall())
-# 총 9개의 필드값 정보를 확인할 수 있으며 각 ()안의 정보 순서는 다음과 같음
-# 각 컬럼 순서, 컬럼이름, 컬럼에 들어갈 타입, not null 유무, 디폴트값 유무, pk유무
-# (0, 'customer_id', 'TEXT', 0, None, 1),
-# 첫번째 필드순서인 0번째 컬럼명은 customer_id이고 text타입이며, not null이 0이므로 무조건 값이 지정되야함, 디폴트값은 None이므로 없고, pk유무는 1이므로 해당 컬럼이 PK임
-  
+  con.executemany(
+    f"INSERT INTO {name} ({', '.join(columns)}) VALUES ({placeholders})", 
+    values, 
+  )
 
+con.commit()
+
+# 이제 실제 테이블에 데이터가 잘 들어갔는지 확인
+# customers테이블의 데이터행의 모든 카운트 갯수를 가지고옴 이때 튜플의 첫번째 값에 담겨있는 갯수만 저장
+customers_count = con.execute("SELECT COUNT(*) FROM customers").fetchone()[0]
+print(customers_count) # 300개 출력
+
+# 그럼 이번엔 customers 테이블의 첫번째 행의 데이터만 확인
+customers_row1 = con.execute("SELECT * FROM customers LIMIT 1").fetchone()
+print(customers_row1) #('C001', '박은수', 'F', 53, '건성', '010-4786-2358', 'eunsu45@example.com', '성남', '2025-06-25')
+
+# 이렇게 실제로 DB에 테이블이 생성되고 데이터가 잘 들어간 것을 확인할 수 있음
+# 하지만 단지 데이터 확인을 위해서 해당 파이프라인 폴더 안쪽의 파일을 실행하면 CSV정보확인 -> 타입 추론 -> SQL문 생성 -> DB 파일생성 -> 테이블 생성 -> 테이터 저장
+# 의 모든 작업단계가 매번 실행되므로 상당히 비효율적 그래서 다다음번 강의에서 해당 파이프라인의 초기 세팅을 매번 다시 실행하지 않으면서 데이터만 빠르게 확인하는 전용 파일 생성 예정
+
+con.close()
