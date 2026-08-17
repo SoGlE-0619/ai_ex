@@ -74,30 +74,49 @@ def owner_of(column, tables):
   return None
 
 
-# 1. 모든 테이블별 필드, 데이터타입, PK구하는 실행
-# 이제부터 모든 csv파일을 반복 돌면서 각 csv파일로부터 컬럼명, 각 데이터를 read_csv함수로 추출
-# 이후 추출한 데이터를 다시 tables라는 변수에 중첩 딕셔너리 형태로 저장
-# 각 딕셔너리에는 csv파일별로 (컬럼명, 모든 데이터 행, 각 컬럼별 타입명, 해당 테이블의 PK 정보)를 담을 예정
-
-# 먼저 데이터가 담길 빈 딕셔너리 생성
+# 1. 모든 테이블별 필드, 데이터타입, PK값 정보 저장하는 실행문
 tables = {}
-
-# data폴더 안쪽의 모든 csv파일을 glob로 찾아서 반복돌며 파일 순서대로 정렬해서 각 파일 경로를 전달
-for path in sorted(DATA_DIR.glob("*.csv")):
-  # 전달받은 path값을 인자로 전달해 read_csv함수를 호출해 컬럼명, 데이터 정보를 변수에 담음
+for path in sorted(DATA_DIR.glob("*.csv")): 
   columns, rows = read_csv(path)
-
   tables[path.stem] = {
-    "columns": columns, # 각 csv파일의 모든 컬럼명을 리스트로 담음
-    "rows": rows, # 모든 데이터행을 딕셔너리가 포함된 리스트 형태로 담음
-    "type": {col: infer_type([r[col] for r in rows]) for col in columns}, # 모든 컬럼값을 infer_type함수로 추론해 지정될 타입명 정보 담음
-    "pk": infer_pk(columns, rows) # infer_pk함수를 이용해 해당 테이블 정보에서의 PK값 구해서 담음
+    "columns": columns, 
+    "rows": rows, 
+    "type": {col: infer_type([r[col] for r in rows]) for col in columns}, 
+    "pk": infer_pk(columns, rows) 
   }
 
-# print(tables) # 합쳐진 모든 테이블 정보 확인
-# print(tables["customers"]) # 그중에서 customers 테이블 정보만 확인
-print(tables["customers"]["columns"]) # customers 테이블에서 컬럼명만 확인
-print(tables["customers"]["rows"][0]) # customers 테이블에서 첫번째 row행 데이터만 확인
-print(tables["customers"]["type"]) # customers 테이블에서 각 컬럼에 담길 데이터타입을 문자열로 확인
-print(tables["customers"]["pk"]) # customers 테이블에서의 PK값 확인
 
+# 2. 특정 테이블에 연결되어 있는 외래키 정보 찾아 기존 tables 정보에 추가
+
+# 먼저 위에서 각 csv파일에서 추출해 모아놓은 tables정보에서 name(테이블명), table(테이블정보)를 내부로 반복해서 전달
+for name, table in tables.items():
+  # 각 테이블에 리스트 형식을 외래키 정보가 담길 빈 리스트 생성
+  fks = []
+
+  # 각 테이블의 컬럼명을 하나씩 뽑아서 조건 비교 시작
+  for col in table["columns"]:
+    # 만약 컬럼명이 _id로 끝나지 않으면 PK, FK 둘다 아니므로 무시하고 넘어감
+    if not col.endswith("_id"):
+      continue
+    
+    # 현재 컬럼명이 가르키는 참조당하는 테이블이 있는지 확인
+    owner = owner_of(col, tables)
+    # 만약 참조당하는 테이블이 없거나 해당 참조테이블 명과 현재 테이블명이 같으면 그건 PK이므로 무시하고 넘어감
+    if not owner or owner == name:
+      continue
+    
+    # 참조당하는 테이블의 PK값이 현재의 col명과 동일하지 않으면 그건 FK이므로 통과 
+    if tables[owner]["pk"] != col:
+      continue
+    
+    # 위의 조건에 통과된 FK인 컬럼명과 해당 외래키가 가르키는 참조 테이블 명을 괄호로 묶어서 리스트 형태로 담음
+    fks.append((col, owner))
+
+  # 위에서 만들어진 fks 리스트 정보를 기존 테이블에 "fks"라는 추가 키를 만들어서 등록
+  table["fks"] = fks
+
+# 그럼 위에서 만들어진 fks키가 기존 테이블에 추가되고 그 안에 외래키 정보가 있는지 직접 확인
+
+print(tables["purchases"]["fks"]) # 전체 tables정보에서 purchases테이블 정보만 찾고 다시 거기에서 fks키값의 정보를 출력
+# 실행하면 아래와 같이 purchases테이블 안에는 customers 테이블을 참조하는 customer_id라는 외래키와 products 테이블을 참조하는 product_id 외래키 2개가 있음을 확인 가능
+# [('customer_id', 'customers'), ('product_id', 'products')]
