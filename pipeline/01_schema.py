@@ -182,19 +182,36 @@ for name in table_order:
     values, 
   )
 
+  # 위에서 데이터를 다 넣은 뒤 외래키 컬럼에 인덱스를 생성
+  # PK는 DB가 인덱스를 자동으로 만들어주지만 FK는 직접 생성해야함
+  # 만약 FK 인덱스가 없다면 다음과 같은 문제가 발생
+  # 100만건의 구매정보가 purchases 테이블에 있을때 해당 구매내역에서 C001 고객의 구매 내역을 찾을때 해당 외래키에 인덱스가 없으면
+  # 100만건에 대한 purchases 구매내역을 풀로 스캔하게 되어 탐색 시간이 길어짐
+  # 또한 PRAGMA foreign_keys = ON으로 외래키 연결 자동 검사를 진행하고 있기 때문에 부모행을 지우거나 수정할때 외래키연결 검사 시간도 증가하게 됨
+  # 하지만 외래키 컬럼에 인덱스를 지정하면 전체 구매내역에서 특정 고객의 구매상품만 검색할때 전체 구매내역을 풀 스캔이 아니라 인덱스가 있는 데이터만 빠르게 검색 가능
+  # 물론 만능은 아닌게 외래키 인덱스 지정시 데이터 저장할땐 시간이 더 많이 소요되지만
+  # 웹에서는 일반적으로 저장보다 탐색의 빈도가 압도적으로 많으므로 외래키 인덱싱은 걸어두는 쪽이 이득
+  for col, _owner in table["fks"]:
+    # SQLite에서 인덱스 이름은 테이블 단위가 아니라 DB전체에서 고유해야함
+    # 따라서 아래와 같이 각 테이블명, 컬럼명을 조합해서 인덱스 생성
+    # INSERT를 다 마친뒤에 인덱스를 만드는 이유는 행마다 매번 인덱스를 갱신하는 것보다
+    # 데이터를 다 넣은 상태에서 인덱스를 한번에 만드는 쪽이 더 빠르기 때문
+    con.execute(f"CREATE INDEX idx_{name}_{col} ON {name}({col})")
+
 con.commit()
 
-# 이제 실제 테이블에 데이터가 잘 들어갔는지 확인
-# customers테이블의 데이터행의 모든 카운트 갯수를 가지고옴 이때 튜플의 첫번째 값에 담겨있는 갯수만 저장
-customers_count = con.execute("SELECT COUNT(*) FROM customers").fetchone()[0]
-print(customers_count) # 300개 출력
+# 그럼 이제 commit문 이후에 (트랜젝션이 완료된 이후에) 실제 FK컬럼에 index가 생성됐는지 확인
+for row in con.execute("SELECT name, tbl_name, sql FROM sqlite_master WHERE type='index'"):
+  print(row)
 
-# 그럼 이번엔 customers 테이블의 첫번째 행의 데이터만 확인
-customers_row1 = con.execute("SELECT * FROM customers LIMIT 1").fetchone()
-print(customers_row1) #('C001', '박은수', 'F', 53, '건성', '010-4786-2358', 'eunsu45@example.com', '성남', '2025-06-25')
-
-# 이렇게 실제로 DB에 테이블이 생성되고 데이터가 잘 들어간 것을 확인할 수 있음
-# 하지만 단지 데이터 확인을 위해서 해당 파이프라인 폴더 안쪽의 파일을 실행하면 CSV정보확인 -> 타입 추론 -> SQL문 생성 -> DB 파일생성 -> 테이블 생성 -> 테이터 저장
-# 의 모든 작업단계가 매번 실행되므로 상당히 비효율적 그래서 다다음번 강의에서 해당 파이프라인의 초기 세팅을 매번 다시 실행하지 않으면서 데이터만 빠르게 확인하는 전용 파일 생성 예정
+# 결과화면 : name(각 index이름, 해당 테이블, FK연결을 위한 sql문)
+# ('sqlite_autoindex_customers_1', 'customers', None) :FK가 없으므로 PK값이 등록되어 있고 PK는 sqlite가 자동 인덱스 처리, FK연결 aql문이 없으므로 None
+# ('sqlite_autoindex_products_1', 'products', None)
+# ('sqlite_autoindex_purchases_1', 'purchases', None)
+# ('idx_purchases_customer_id', 'purchases', 'CREATE INDEX idx_purchases_customer_id ON purchases(customer_id)')
+# ('idx_purchases_product_id', 'purchases', 'CREATE INDEX idx_purchases_product_id ON purchases(product_id)')
+# ('sqlite_autoindex_product_details_1', 'product_details', None)
+# ('idx_product_details_product_id', 'product_details', 'CREATE INDEX idx_product_details_product_id ON product_details(product_id)')
+# 예시로 마지막 정보에는 idx_{name}_{col} 형태로 우리가 직접 지정한 FK index확인 가능
 
 con.close()
