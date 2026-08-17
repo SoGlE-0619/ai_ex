@@ -52,41 +52,35 @@ def infer_type(values):
 
 
 # 컬럼명과, 데이터를 전달해 PK를 찾는 함수
-# infer_pk(colums, rows) -> 해당 데이터에서의 PK값 반환
-# columns = ["customer_id", "name", "gender", ...]
-# rows = [{"customer_id": "C001", "name": "박은수", ...}, ...]
 def infer_pk(columns, rows):
-  # 첫번째 인자로 전달된 모든 컬렴값을 반복돌며 _id로 끝나지 않는다면 무시하고 넘어감
-  # _id가 없으면 PK, FK 둘다 아니므로
   for col in columns:
     if not col.endswith("_id"):
       continue
-    # 결국 _id로 끝나는 컬럼명에 해당 하는 모든 값을 values에 리스트 형태로 담음
     values = [r[col] for r in rows]
 
-    # 만약 values에 빈문자열이 하나라도 있으면 무조건 다음 컬럼으로 넘어감
     if "" in values:
       continue
-    # 마지막으로 특정 컬럼값에 중복을 제거한 리스트 갯수와 전체 리스트 갯수를 비교해서 같으면
-    # 그 값에는 공통의 _id의 값이 없으므로 FK가 아닌 PK이고 해당 컬럼명을 반환한다 
     if len(set(values)) == len(values):
       return col
-  # 만약 위의 조건에 걸러지는게 하나도 없으면 결국 PK가 없는 것이므로 None반환
   return None
 
 
-# 실제 infer_pk를 통해 CSV파일의 PK알아내기
-# 준비물 해당 함수에 들어갈 columns, rows 데이터 필요 (read_csv 함수 활용)
+# FK 후보 컬럼명의 주인으로 예상되는 테이블을 찾는 함수
+# 특정 컬럼에 매칭되는 참조 대상 테이블이 있는지 찾아서 해당 컬럼이 실제 FK인지 판단하기 위해 필요
+def owner_of(column, tables):
+  # column : "customer_id", 첫번째 인자엔 FK인지 검사하고 싶은 컬럼명이 들어옴
+  # tables : {"customsers":{...}, "products: {...}"}, 두번째 인자엔 모든 csv파일 정보값이 들어옴
+  # 일단 컬럼명에서 뒤에 _id를 제거함
+  stem = column[:3]
 
-# 먼저 인자로 전달할 colums, rows 데이터 추출
-columns, rows = read_csv(DATA_DIR / "customers.csv")
+  # 컬럼명이 customer 일때, 관련 테이블명이 보통 customer이거나 그 뒤에 복수형표시가 붙는게 일반적이므로 s, es를 붙인 후보군을 2개 더 생성해서 반복
+  for candidate in (stem, stem+"s",  stem+"es"):
+    # 해당 후보군에서 실제 매칭되는 테이블명이 tables정보에 있으면 해당 값을 반환
+    if candidate in tables:
+      return candidate
 
-print(columns) # 리스트 형태로 컬럼값 확인
-print(rows[0]) # rows 데이터 행이 많으므로 첫번째 행만 확인
-
-# 이제 실해 해당 정보 2개를 인자로 전달해서 PK찾기
-pk_name = infer_pk(columns, rows)
-print(pk_name) # 결국 customers.csv파일 데이터에서의 PK명은 customer_id인것을 확인 가능
+  # 없으면 None 반환  
+  return None
 
 
 
