@@ -36,25 +36,40 @@ def looks_date(text):
 
 # 한 컬럼의 값들을 보고 알맞은 DB 타입 반환 함수
 def infer_type(values):
-  # values로 들어온 컬럼값 리스트를 반복돌며 일단 값이 없으면 제외하고 리스트로 담음
   seen = [v for v in values if v != ""]
 
-  # 혹시 값이 모두 비어있으면 무조건 "TEXT"타입 반환 (빈 문자열로 문자이기 때문)
   if not seen:
     return "TEXT"
-  # 리스트에 있는 모든 값을 looks_int함수로 검사해서 모두 숫자여야지만 "INTEGER"타입 반환
   if all(looks_int(v) for v in seen):
     return "INTEGER"
-  # 리스트에 있는 모든 값을 looks_float함수로 검사해서 모두 숫자여야지만 "FLOAT"타입 반환
   if all(looks_float(v) for v in seen):
     return "FLOAT"
-  # 리스트에 있는 모든 값을 looks_date함수로 검사해서 모두 날짜형태여야만 "DATE"타입 반환
   if all(looks_date(v) for v in seen):
     return "DATE"
-  # 그 외에 모든 경우는 "TEXT" 타입처리
   return "TEXT"
 
-# 실제 테스트 호출
-print(infer_type(["10", "20", "30"])) # 만약 컬럼값이 물건 구매 수량일경우 -> INTEGER
-print(infer_type(["007", "008", "009"])) # 만약 컬럼값이 고객 고유 id값을 경우 -> TEXT
-print(infer_type(["2024-03-04", "2024-04-05"])) # 만약 컬럼값이 고객이 물품을 구매한 날짜인 경우 -> DATE
+
+# 컬럼명과, 데이터를 전달해 PK를 찾는 함수
+# infer_pk(colums, rows) -> 해당 데이터에서의 PK값 반환
+# columns = ["customer_id", "name", "gender", ...]
+# rows = [{"customer_id": "C001", "name": "박은수", ...}, ...]
+def infer_pk(columns, rows):
+  # 첫번째 인자로 전달된 모든 컬렴값을 반복돌며 _id로 끝나지 않는다면 무시하고 넘어감
+  # _id가 없으면 PK, FK 둘다 아니므로
+  for col in columns:
+    if not col.endswith("_id"):
+      continue
+    # 결국 _id로 끝나는 컬럼명에 해당 하는 모든 값을 values에 리스트 형태로 담음
+    values = [r[col] for r in rows]
+
+    # 만약 values에 빈문자열이 하나라도 있으면 무조건 다음 컬럼으로 넘어감
+    if "" in values:
+      continue
+    # 마지막으로 특정 컬럼값에 중복을 제거한 리스트 갯수와 전체 리스트 갯수를 비교해서 같으면
+    # 그 값에는 공통의 _id의 값이 없으므로 FK가 아닌 PK이고 해당 컬럼명을 반환한다 
+    if len(set(values)) == len(values):
+      return col
+  # 만약 위의 조건에 걸러지는게 하나도 없으면 결국 PK가 없는 것이므로 None반환
+  return None
+
+
