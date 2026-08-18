@@ -20,11 +20,21 @@ def customer_list(limit=None):
     ORDER BY n_purchases DESC
   """
   )
-
   return rows[:limit] if limit else rows
+
+# 고객아이디를 인수로 전달해서 해당고객에 대한 정보만 가져오는 함수
+def get_info(customer_id):
+  result = dicts("""
+    SELECT * FROM customers WHERE customer_id = ?
+  """, (customer_id,))
+
+  return result
+
 
 if __name__ == "__main__": 
   # 고객정보를 2개까지 출력
-  print(customer_list(2))
+  # print(customer_list(2))
+
+  print(get_info("C002"))
 
 
