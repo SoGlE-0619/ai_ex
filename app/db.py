@@ -13,10 +13,18 @@ import sqlite3
 from app.config import DB_PATH
 con = sqlite3.connect(DB_PATH)
 
+# 여러개의 행을 list[tuple] 형태로 반환하는 함수
 def query(sql, params=()):
   return con.execute(sql, params).fetchall()
 
-rows = query("SELECT name FROM products WHERE price >=? LIMIT 3", ("10000",))
-print(rows)
+# 하나의 행 정보만 반환하는 함수 (고객정보)
+def one(sql, params=()):
+  return con.execute(sql, params).fetchone()
 
-# products테이블에서 가격이(price) 3만원 이상이고 그와 동시에 용량이(volume) 50ml 이상인제품 전부호출
+# rows = query("SELECT name FROM products WHERE price >=? LIMIT 3", ("10000",))
+# print(rows)
+
+# C001이라는 아이디의 고객정보를 가져오는 구문
+info = one("SELECT * FROM customers WHERE customer_id = ?", ("C001",))
+print(info)
+
