@@ -43,8 +43,9 @@ def dashboard(customer_id):
     return None 
 
   products = dicts("""
-    SELECT products.product_id, products.name, products.category, products.price, purchases.purchased_at, purchases.rating, purchases.review
-    FROM purchases JOIN products ON purchases.product_id = products.product_id --상품아이디가 같은 정보를 조인해서 가져옴
+    SELECT products.product_id, products.name, products.category, products.price,  --고객이 구매한 상품 정보
+    purchases.purchased_at, purchases.rating, purchases.review    -- 고객의 구매내역 정보
+    FROM purchases JOIN products ON purchases.product_id = products.product_id  --상품아이디가 같은 정보를 조인해서 가져옴
     WHERE purchases.customer_id = ?
   """, (customer_id,))
 
