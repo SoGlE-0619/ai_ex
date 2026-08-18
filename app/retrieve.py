@@ -43,13 +43,14 @@ def dashboard(customer_id):
     return None 
 
   products = dicts("""
-    SELECT products.product_id, products.name, products.categoroy, products.price, purchases.purchases_at, purchases.rating, purchases.review
+    SELECT products.product_id, products.name, products.category, products.price, purchases.purchased_at, purchases.rating, purchases.review
     FROM purchases JOIN products ON purchases.product_id = products.product_id --상품아이디가 같은 정보를 조인해서 가져옴
     WHERE purchases.customer_id = ?
   """, (customer_id,))
 
   return {
     "customers" : profile,   
+    "products": products
   }
 
 
