@@ -34,7 +34,7 @@ def get_info(customer_id):
 def dashboard(customer_id):
   # 기본 고객정보를 별도의 딕셔너리 형태로 반환받음
   profile = dicts("""
-    SELECT customer_id, name, age, gender, skin_type, city -- 보안이 중요한 고객정보인 전화번호, 이메일은 애초에 제외하고 데이터 호출
+    SELECT customer_id, name, age, gender, skin_type, city   -- 보안이 중요한 고객정보인 전화번호, 이메일은 애초에 제외하고 데이터 호출
     FROM customers WHERE customer_id = ?
   """, (customer_id,))
 
@@ -42,16 +42,21 @@ def dashboard(customer_id):
   if not profile:
     return None 
 
-  products = dicts("""
+  # 구매정보도 별도의 딕셔너리 형태로 반환받음
+  purchases = dicts("""
     SELECT products.product_id, products.name, products.category, products.price,  --고객이 구매한 상품 정보
     purchases.purchased_at, purchases.rating, purchases.review    -- 고객의 구매내역 정보
     FROM purchases JOIN products ON purchases.product_id = products.product_id  --상품아이디가 같은 정보를 조인해서 가져옴
     WHERE purchases.customer_id = ?
   """, (customer_id,))
 
+  ratings = [row["rating"] for row in purchases if row["rating"] is not None]
+
+  # 고객정보와 구매 정보를 다시 상위 딕셔너리로 합쳐서 최종 반환
   return {
-    "customers" : profile,   
-    "products": products
+    "customers" : profile[0],  
+    "avg_rating" :round(sum(ratings) / len(ratings), 2),  
+    "purchases": purchases[0]
   }
 
 
@@ -60,6 +65,6 @@ if __name__ == "__main__":
   # print(customer_list(2))
 
   #print(get_info("C002"))
-  print(dashboard("C002"))
+  print(dashboard("C005"))
 
 
