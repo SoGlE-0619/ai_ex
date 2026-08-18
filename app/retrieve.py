@@ -10,16 +10,29 @@
 
 from app.db import dicts
 
-# 12시 20분까지
-# customers 테이블에서 고객아이디가 인 고객의 모든정보를 가지고오되 purchases 테이블해서 해당 고객이 구매한 상품의 총 갯수도 같이 가져오는 로직을 dicts함수를 이용해서 반환
-
-vip = dicts("""
-    SELECT customers.name, customers.customer_id, COUNT(purchases.purchase_id) AS n_purchases
-    FROM customers LEFT JOIN purchases
-    ON purchases.customer_id = customers.customer_id
+# 고객목록 + 각 고객의 구매 건수 반환 함수
+def customer_list(limit=None):
+  rows = dicts("""
+    SELECT  customers.customer_id, customers.name, customers.age, customers.gender, customers.skin_type, customers.city, COUNT(purchases.purchase_id) AS n_purchases
+    FROM customers LEFT JOIN purchases 
+    ON purchases.customer_id = customers.customer_id AND purchases.is_holdout = 0
     GROUP BY customers.customer_id, customers.name
     ORDER BY n_purchases DESC
   """
   )
 
-print(vip[0])
+  return rows[:limit] if limit else rows
+
+print(customer_list(2))
+
+
+# vip = dicts("""
+#     SELECT customers.name, customers.customer_id, COUNT(purchases.purchase_id) AS n_purchases
+#     FROM customers LEFT JOIN purchases
+#     ON purchases.customer_id = customers.customer_id
+#     GROUP BY customers.customer_id, customers.name
+#     ORDER BY n_purchases DESC
+#   """
+#   )
+
+# print(vip[0])
