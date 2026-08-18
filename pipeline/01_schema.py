@@ -189,4 +189,20 @@ for name in table_order:
     con.execute(f"CREATE INDEX idx_{name}_{col} ON {name}({col})")
 
 con.commit()
+
+# customers 테이블에서 전체 행의 갯수 구해서 print로 출력
+# con.execute("sql문").fetchone()
+customers_count = con.execute("SELECT COUNT(*) FROM customers").fetchone()[0]
+print(customers_count)
+
+# customers 테이블에서 첫번째 행의 모든 정보 출력
+customer_info = con.execute("SELECT * FROM customers").fetchone()
+print(customer_info)
+
+# 지금 처럼 해당 파일에서 데이터확인 sql문을 실행하면 안되는 이유
+# 01_schema.py 하는일은 다음과 같음
+# csv파일 모두 불러움 -> 파일별로 테이블명과 들어갈 데이터분리 -> 각 데이터별로 타입 추론 -> 테이블 생성 sql문 제작 -> sql문 실행해서 테이블생성 -> 생성된 테이블에 각 csv파일 데이터를 데이터타입에 맞게 변환해서 저장 -> 생성된 데이터의 외래키 컬럼에 인덱싱 처리
+
+# 그래서 해당 파일에 단지 데이터 확인하는 쿼리문을 날리면 그거 하나때문의 위의 무거운 프로세스가 매번 계속 실행됨
+# 해결법 : 별도의 db.py를 app폴더 안쪽에 만들어서 파이프라인은 건들지않으면서 데이터조회함수를 호출해 사용
 con.close()
