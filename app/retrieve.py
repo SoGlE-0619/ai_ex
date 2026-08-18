@@ -70,3 +70,20 @@ def dashboard(customer_id):
 if __name__ == "__main__": 
   print(dashboard("C005"))
 
+  """
+  {
+    'customers': {'customer_id': 'C005', 'name': '이은수', 'age': 53, 'gender': 'F', 'skin_type': '중성', 'city': '부산'}, 'avg_rating': 3.2, 
+    'total_spent': 159600, 
+    'by_category': {'에센스': 3, '클렌징오일': 1, '선크림': 1}, 
+    'purchases': {
+      'product_id': 'P032', 
+      'name': '세라마이드 시카 에센스', 
+      'category': '에센스', 
+      'price': 38800, 
+      'purchased_at': '2025-07-17', 
+      'rating': 3, 
+      'review': '기대가 컸나 봐요. 산뜻한 제형이라 아침에 쓰기 좋아요. 재고 문의는 010 8202 9049 로 부탁드려요.'
+    }
+  }
+  """
+
