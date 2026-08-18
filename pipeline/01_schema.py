@@ -170,6 +170,8 @@ for name in table_order:
   combined_sql = build_create(name, table)
   con.execute(combined_sql)
 
+
+
   # 생성된 테이블에 데이터 저장
   columns = table["columns"]
   placeholders = ", ".join("?" for _ in columns)
@@ -192,12 +194,12 @@ con.commit()
 
 # customers 테이블에서 전체 행의 갯수 구해서 print로 출력
 # con.execute("sql문").fetchone()
-customers_count = con.execute("SELECT COUNT(*) FROM customers").fetchone()[0]
-print(customers_count)
+# customers_count = con.execute("SELECT COUNT(*) FROM customers").fetchone()[0]
+# print(customers_count)
 
-# customers 테이블에서 첫번째 행의 모든 정보 출력
-customer_info = con.execute("SELECT * FROM customers").fetchone()
-print(customer_info)
+# # customers 테이블에서 첫번째 행의 모든 정보 출력
+# customer_info = con.execute("SELECT * FROM customers").fetchone()
+# print(customer_info)
 
 # 지금 처럼 해당 파일에서 데이터확인 sql문을 실행하면 안되는 이유
 # 01_schema.py 하는일은 다음과 같음
