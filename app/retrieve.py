@@ -51,20 +51,23 @@ def dashboard(customer_id):
   """, (customer_id,))
 
   ratings = [row["rating"] for row in purchases if row["rating"] is not None]
+  prices = [row["price"] for row in purchases if row["price"] is not None]
+
+  # {카테고리: 갯수}를 담을 빈 딕셔너리
+  by_category = {}
+  for row in purchases:
+    by_category[row["category"]] = by_category.get(row["category"],0) +1
 
   # 고객정보와 구매 정보를 다시 상위 딕셔너리로 합쳐서 최종 반환
   return {
     "customers" : profile[0],  
     "avg_rating" :round(sum(ratings) / len(ratings), 2),  
+    "total_spent" : sum(prices),
+    "by_category" : by_category,
     "purchases": purchases[0]
   }
 
-
 if __name__ == "__main__": 
-  # 고객정보를 2개까지 출력
-  # print(customer_list(2))
-
-  #print(get_info("C002"))
   print(dashboard("C005"))
 
 
