@@ -23,16 +23,8 @@ def customer_list(limit=None):
 
   return rows[:limit] if limit else rows
 
-print(customer_list(2))
+if __name__ == "__main__": 
+  # 고객정보를 2개까지 출력
+  print(customer_list(2))
 
 
-# vip = dicts("""
-#     SELECT customers.name, customers.customer_id, COUNT(purchases.purchase_id) AS n_purchases
-#     FROM customers LEFT JOIN purchases
-#     ON purchases.customer_id = customers.customer_id
-#     GROUP BY customers.customer_id, customers.name
-#     ORDER BY n_purchases DESC
-#   """
-#   )
-
-# print(vip[0])
