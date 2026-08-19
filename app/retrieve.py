@@ -63,11 +63,23 @@ def dashboard(customer_id):
     "avg_rating" :round(sum(ratings) / len(ratings), 2),  
     "total_spent" : sum(prices),
     "by_category" : by_category,
-    "purchases": purchases[0]
+    "purchases": purchases
   }
 
 if __name__ == "__main__": 
-  print(dashboard("C005"))
+  board = dashboard("C005")
+  customer = board["customers"]  
+
+  print(f"\n대시보드 - {customer['name']} ({customer['customer_id']})")
+  print(f"   {customer['age']}세, {customer['gender']}, {customer['skin_type']}피부타입, {customer['city']}, 구매 {customer['n_purchases']}건")
+  print(f"    평균별점 {board['avg_rating']}, 누적구매액 {board['total_spent']:,}원")
+  print()
+  for row in board["purchases"]:
+    print(f"   {row['name']} / {'★' * row['rating']} / {row['review']} / {row['purchased_at']}")
+
+  # 제품구매 날짜 / 별이나 기타 이모지 기호가 갯수만큼 출력 
+  # 후기1 , 후기2 (줄바꿈되도록 출력)
+  
 
   """
   {
