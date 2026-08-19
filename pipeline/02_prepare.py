@@ -21,3 +21,21 @@ from app.config import DB_PATH, EMBED_TOKENIZER
 
 con = sqlite3.connect(DB_PATH)
 con.execute("PRAGMA foreign_keys = ON")
+
+tok = AutoTokenizer.from_pretrained(EMBED_TOKENIZER)
+
+# 텍스트를 인자로 전달받아서 모델이 이해하는 토큰으로 나누고 토큰의 갯수를 반환하는 함수
+def ntok(text):
+   return len(tok.encode(text))
+
+if __name__ == "__main__":
+  details = [
+    "짧은 상품 설명",
+    "조금 더 긴 상품 설명입니다",
+    "아주 길고 자세한 상품 설명입니다...",
+    "간단한 설명",
+    "보통 길이의 상품 설명입니다"
+  ]
+
+  token_counts = [ntok(detail) for detail in details]
+  print(token_counts)
