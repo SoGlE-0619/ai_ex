@@ -47,8 +47,6 @@ SEPERATORS = ["\n\n", "\n", "다", "요", ".", ",", ""]
 #    metadata={"section": "제품소개"}
 # )
 
-
-
 if __name__ == "__main__":
   details = query("""
     SELECT product_details.product_id, products.name, product_details.detail
@@ -77,6 +75,25 @@ if __name__ == "__main__":
   # print(sections[0][3])
 
   # 2단계- 1단계에서 분리한 본문내용의 최대 토큰수용치를 넘어설때 2차 청킹필요
-  respliter = RecursiveCharacterTextSplitter.from_huggingface_tokenizer(
-    tok, chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP, seperators=SEPERATORS, keep_seperator="end"
+  resplitter = RecursiveCharacterTextSplitter.from_huggingface_tokenizer(
+    tok, chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP, separators=SEPERATORS, keep_separator="end"
   )
+
+  rows = [] #(product_id, product_name, section, chunk_index, body)
+  n_resplit = 0
+
+  for pid, pname, section, text in sections:
+    # md파일에서 잘라난 본문내용이 최대토큰수보다 넘어서면 카운트1 증가시키면서 2차 청킹작업 시작
+    if ntok(text) > RESPLIT_OVER:
+      n_resplit +=1
+      parts = resplitter.split_text(text)
+    # 만약 넘치지 않으면 그냥 그대로 저장
+    else:
+      parts = [text]
+
+    for i, part in enumerate(parts):
+      rows.append((pid, pname, section, i, part))
+
+  print(rows[0])
+
+
