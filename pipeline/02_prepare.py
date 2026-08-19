@@ -55,15 +55,7 @@ if __name__ == "__main__":
   # 모델에 들어가는 토큰수 / 전체 토큰수
   print(fits)
 
-  # print(over)
-  # print("-----")
-  # print(len(over))
-
-  # print(details)
-  # print(len(details))
-
-  # details = [
-  #    ('P001', "상품명1", "상품1의 엄청 긴 설명"),
-  #    ('P001', "상품명1", "상품1의 엄청 긴 설명"),
-  #    .....
-  # ]
+  print(f"   임베딩 모델 상한: {EMBED_MAX_TOKENS}토큰 ({EMBED_TOKENIZER})")
+  print(f"   상세 토큰 분포: {dist(full_tokens)}")
+  print(f"   상한초과 : {len(over)/len(full_tokens)}건 {len(over)/len(full_tokens) * 100:.0f}%")
+  print(f"   평균수용률: {sum(fits)/len(fits)*100:.0f}%")
