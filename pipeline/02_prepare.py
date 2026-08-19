@@ -54,6 +54,12 @@ if __name__ == "__main__":
     ORDER BY product_details.product_id
   """)
 
+  # 각 상품별 청킹하기 전 상태의 제품상세 설명 데이터의 토큰수 모음
+  full_tokens = [ntok(detail) for _, _, detail in details]
+
+  # 원본에서 각 청크데이터중 최태토큰수를 넘어간 데이터 리스트
+  over = [n for n in full_tokens if n > EMBED_MAX_TOKENS ]
+
   # 1. 단계: 일단은 제목별로 본문 분리
   # 지금부터는 글자수가 아니라 '## 주의사항' 같은 md의 제목을 경계로 해서 문자를 짜름(청킹)
   md_splitter = MarkdownHeaderTextSplitter(headers_to_split_on=HEADERS)
@@ -94,8 +100,16 @@ if __name__ == "__main__":
     for i, part in enumerate(parts):
       rows.append((pid, pname, section, i, part))
 
-  print(rows[0])
+  section_tokens = [ntok(t) for _, _, _, t in sections] # 개별 섹션별 토큰수
+  chunk_tokens = [ntok(body) for *_, body in rows] # 청킹된 본문텍스트의 토큰수
 
+  print(f"  0단 (통짜일때) {len(full_tokens)} {dist(full_tokens)}")
+  print(f"  1단 (md형식으로 짤랐을때) {len(sections)} {dist(section_tokens)}")
+  print(f"  2단 (문장단위로 짤랐을때) {len(rows)} {dist(chunk_tokens)}")
+  print(f"  상한({EMBED_MAX_TOKENS}) 초과가 {len(over)}건")
+  print(f"  {sum(n > EMBED_MAX_TOKENS for n in chunk_tokens)}개 / {len(sections)}개")
+
+  # print(rows[0][4])
 
   """
     문자 데이터 청킹 흐름 (보통 실무에서 아래 순서로 작업 프로세스가 고착화되어 있음)
