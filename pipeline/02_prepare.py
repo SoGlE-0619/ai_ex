@@ -35,7 +35,7 @@ def ntok(text):
 def dist(values):
    return (f"최소 {min(values)} / 중앙 {int(statistics.median(values))} / 최대 {max(values)}")
 
-CHUNK_SIZE = 384
+CHUNK_SIZE = 100
 CHUNK_OVERLAP = 48
 PREFIX_BUDGET = 32  #접두사 [상품명 > 위치] 본문내용
 RESPLIT_OVER = EMBED_MAX_TOKENS - PREFIX_BUDGET
@@ -87,12 +87,14 @@ if __name__ == "__main__":
 
   rows = [] #(product_id, product_name, section, chunk_index, body)
   n_resplit = 0
+  resplit_log = [] # 2차 청킹이 실제로 발동한 섹션만 기록 (제품아이디, 제품명, 섹션명, 원본토큰수, 조각리스트)
 
   for pid, pname, section, text in sections:
     # md파일에서 잘라난 본문내용이 최대토큰수보다 넘어서면 카운트1 증가시키면서 2차 청킹작업 시작
     if ntok(text) > RESPLIT_OVER:
       n_resplit +=1
       parts = resplitter.split_text(text)
+      resplit_log.append((pid, pname, section, ntok(text), parts))
     # 만약 넘치지 않으면 그냥 그대로 저장
     else:
       parts = [text]
@@ -100,16 +102,32 @@ if __name__ == "__main__":
     for i, part in enumerate(parts):
       rows.append((pid, pname, section, i, part))
 
-  section_tokens = [ntok(t) for _, _, _, t in sections] # 개별 섹션별 토큰수
-  chunk_tokens = [ntok(body) for *_, body in rows] # 청킹된 본문텍스트의 토큰수
+  # section_tokens = [ntok(t) for _, _, _, t in sections] # 개별 섹션별 토큰수
+  # chunk_tokens = [ntok(body) for *_, body in rows] # 청킹된 본문텍스트의 토큰수
 
-  print(f"  0단 (통짜일때) {len(full_tokens)} {dist(full_tokens)}")
-  print(f"  1단 (md형식으로 짤랐을때) {len(sections)} {dist(section_tokens)}")
-  print(f"  2단 (문장단위로 짤랐을때) {len(rows)} {dist(chunk_tokens)}")
-  print(f"  상한({EMBED_MAX_TOKENS}) 초과가 {len(over)}건")
-  print(f"  {sum(n > EMBED_MAX_TOKENS for n in chunk_tokens)}개 / {len(sections)}개")
+  # print(f"  0단 (통짜일때) {len(full_tokens)} {dist(full_tokens)}")
+  # print(f"  1단 (md형식으로 짤랐을때) {len(sections)} {dist(section_tokens)}")
+  # print(f"  2단 (문장단위로 짤랐을때) {len(rows)} {dist(chunk_tokens)}")
+  # print(f"  상한({EMBED_MAX_TOKENS}) 초과가 {len(over)}건")
+  # print(f"  {sum(n > EMBED_MAX_TOKENS for n in chunk_tokens)}개 / {len(sections)}개")
 
-  # print(rows[0][4])
+  # 2차 청킹이 발동한 섹션만 골라서 조각 리스트로 하나씩 확인
+  print(f"2차 청킹 발동: {n_resplit}건 / 섹션 {len(sections)}개 -> 최종 {len(rows)}조각")
+  print()
+
+  for pid, pname, section, before, parts in resplit_log:
+    # 각 조각의 토큰수만 모은 리스트 (원본 한덩어리가 몇토큰짜리 몇조각으로 나뉘었는지 확인용)
+    part_tokens = [ntok(part) for part in parts]
+    print(f"[{pid}] {pname} > {section} : {before}토큰 -> {len(parts)}조각 {part_tokens}")
+
+    for i, part in enumerate(parts):
+      # 조각 본문은 길어서 앞 60자만 미리보기로 출력 (줄바꿈은 공백으로 치환)
+      preview = " ".join(part.split())[:60]
+      print(f"    {i}: {preview}...")
+
+  # print(len(resplit_log))
+
+
 
   """
     문자 데이터 청킹 흐름 (보통 실무에서 아래 순서로 작업 프로세스가 고착화되어 있음)
