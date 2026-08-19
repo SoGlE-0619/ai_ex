@@ -18,6 +18,7 @@ hf_logging.set_verbosity_error()
 from transformers import AutoTokenizer
 
 from app.config import DB_PATH, EMBED_TOKENIZER
+from app.db import query
 
 con = sqlite3.connect(DB_PATH)
 con.execute("PRAGMA foreign_keys = ON")
@@ -33,20 +34,17 @@ def dist(values):
    return (f"최소 {min(values)} / 중앙 {int(statistics.median(values))} / 최대 {max(values)}")
 
 if __name__ == "__main__":
-  details = [
-    "짧은 상품 설명",
-    "조금 더 긴 상품 설명입니다",
-    "아주 길고 자세한 상품 설명입니다...",
-    "간단한 설명",
-    "보통 길이의 상품 설명입니다"
-  ]
+  details = query("""
+    SELECT product_details.product_id, products.name, product_details.detail
+    FROM product_details JOIN products ON product_details.product_id = products.product_id
+    ORDER BY product_details.product_id
+  """)
 
-  token_counts = [ntok(detail) for detail in details]
-  print(token_counts) # [5, 8, 10, 4, 8] -> [4, 5, 8, 8, 10]
-  print(dist(token_counts)) # 최소 4 / 중앙 8 / 최대 10
+  print(details)
+  print(len(details))
 
-  # dist로 반환받은 중앙값은 평균값이 아님
-  # 왜 우리는 토큰 검사를 할때 평균값이 아닌 중앙값을 고려해야 되는지 고민
-  # 텍스트들의 토큰 갯수를 고려할때 평균값을 쓰면 안되는 이유는 특정 글 하나가 엄청 긴 텍스트일떄
-  # 그 유별한 길이의 텍스트 정보때문에 평균값의 수치가 오염될 수 있음
-  # 그래서 실제 임베딩시에는 평균값이 아닌 사용자가 일반적으로 많이 쓰는 중앙값을 활용해야함
+  # details = [
+  #    ('P001', "상품명1", "상품1의 엄청 긴 설명"),
+  #    ('P001', "상품명1", "상품1의 엄청 긴 설명"),
+  #    .....
+  # ]
