@@ -15,6 +15,8 @@ from transformers import logging as hf_logging
 # 중요한 에러 문구는 그대로 출력 처리
 hf_logging.set_verbosity_error()
 
+from langchain_text_splitters import MarkdownHeaderTextSplitter
+
 from transformers import AutoTokenizer
 
 from app.config import DB_PATH, EMBED_TOKENIZER, EMBED_MAX_TOKENS
@@ -33,6 +35,18 @@ def ntok(text):
 def dist(values):
    return (f"최소 {min(values)} / 중앙 {int(statistics.median(values))} / 최대 {max(values)}")
 
+CHUNK_SIZE = 384
+CHUNK_OVERLAP = 48
+PREFIX_BUDGET = 32  #접두사 [상품명 > 위치] 본문내용
+RESPLIT_OVER = EMBED_MAX_TOKENS - PREFIX_BUDGET
+HEADERS = [("##", "section")] # 청킹할 데이터의 표시 경계 구분점 생성 (Markdown)
+SEPERATORS = ["\n\n", "\n", "다", "요", ".", ",", ""]
+
+# Document(
+#    page_content="수분을 공급하는 크림입니다"
+#    metadata={"section": "제품소개"}
+# )
+
 if __name__ == "__main__":
   details = query("""
     SELECT product_details.product_id, products.name, product_details.detail
@@ -40,34 +54,4 @@ if __name__ == "__main__":
     ORDER BY product_details.product_id
   """)
 
-  full_tokens = [ntok(detail) for _, _, detail in details]
-  # print("full_tokens", full_tokens)
 
-  # 현재 제품설명중에서 최대 토큰인 512토큰을 넘어가는 글의 토큰수만 다시 리스트로 분류
-  over = [n for n in full_tokens if n > EMBED_MAX_TOKENS ]
-
-  # 현재 상품정보 데이터에서 지금 ai처리할때 수용되는 데이터의 퍼센트
-  # 작업순서 먼저 모든 상품의 토큰수 확인 (full_token), 
-  # 그리고 최대 토큰을 넘어서지 않는 글의 데이터를 찾아 평균값 구함
-  fits = [min(n, EMBED_MAX_TOKENS) / n for n in full_tokens]
-  
-  # n for n in full_tokens 각 상품설명의 토큰수를 하나씩 확인
-  # 모델에 들어가는 토큰수 / 전체 토큰수
-  print(fits)
-
-  print(f"   임베딩 모델 상한: {EMBED_MAX_TOKENS}토큰 ({EMBED_TOKENIZER})")
-  print(f"   상세 토큰 분포: {dist(full_tokens)}")
-  print(f"   상한초과 : {len(over)/len(full_tokens)}건 {len(over)/len(full_tokens) * 100:.0f}%")
-  print(f"   평균수용률: {sum(fits)/len(fits)*100:.0f}%")
-
-  print("----------------------------")
-
-  text = "안녕하세요. 반갑습니다."
-  print(tok.tokenize(text))
-  # ['▁안녕하세요', '.', '▁반', '갑', '습니다', '.']
-
-  text1 = "안녕하세요"
-  text2 = "메틸데이트"
-  # 같은 문자갯수라도 모델이 학습이 완료된 단어와 학습이 완료되지 특수 용어의 1토큰당 할당되는 문자의 갯수는 다를수 있다.
-  print("안녕하세요", tok.tokenize(text1))
-  print("메틸데이트", tok.tokenize(text2))
