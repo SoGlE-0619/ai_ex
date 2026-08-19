@@ -28,6 +28,10 @@ tok = AutoTokenizer.from_pretrained(EMBED_TOKENIZER)
 def ntok(text):
    return len(tok.encode(text))
 
+# 여러개의 문장을 토큰화 했을때 최소, 중간, 최대 토큰갯수를 파악하는 함수
+def dist(values):
+   return (f"최소 {min(values)} / 중앙 {int(statistics.median(values))} / 최대 {max(values)}")
+
 if __name__ == "__main__":
   details = [
     "짧은 상품 설명",
@@ -38,4 +42,5 @@ if __name__ == "__main__":
   ]
 
   token_counts = [ntok(detail) for detail in details]
-  print(token_counts)
+  print(token_counts) # [5, 8, 10, 4, 8]
+  print(dist(token_counts)) # 최소 4 / 중앙 8 / 최대 10
