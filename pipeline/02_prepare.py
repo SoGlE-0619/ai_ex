@@ -98,7 +98,7 @@ if __name__ == "__main__":
       parts = [text]
 
     for i, part in enumerate(parts):
-      rows.append((pid, pname, section, i, part))
+      rows.append((pid, pname, section, i, parts))
 
   section_tokens = [ntok(t) for _, _, _, t in sections] # 개별 섹션별 토큰수
   chunk_tokens = [ntok(body) for *_, body in rows] # 청킹된 본문텍스트의 토큰수
