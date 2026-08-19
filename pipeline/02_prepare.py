@@ -45,9 +45,19 @@ if __name__ == "__main__":
 
   # 현재 제품설명중에서 최대 토큰인 512토큰을 넘어가는 글의 토큰수만 다시 리스트로 분류
   over = [n for n in full_tokens if n > EMBED_MAX_TOKENS ]
-  print(over)
-  print("-----")
-  print(len(over))
+
+  # 현재 상품정보 데이터에서 지금 ai처리할때 수용되는 데이터의 퍼센트
+  # 작업순서 먼저 모든 상품의 토큰수 확인 (full_token), 
+  # 그리고 최대 토큰을 넘어서지 않는 글의 데이터를 찾아 평균값 구함
+  fits = [min(n, EMBED_MAX_TOKENS) / n for n in full_tokens]
+  
+  # n for n in full_tokens 각 상품설명의 토큰수를 하나씩 확인
+  # 모델에 들어가는 토큰수 / 전체 토큰수
+  print(fits)
+
+  # print(over)
+  # print("-----")
+  # print(len(over))
 
   # print(details)
   # print(len(details))
