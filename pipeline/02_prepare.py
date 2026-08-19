@@ -59,3 +59,15 @@ if __name__ == "__main__":
   print(f"   상세 토큰 분포: {dist(full_tokens)}")
   print(f"   상한초과 : {len(over)/len(full_tokens)}건 {len(over)/len(full_tokens) * 100:.0f}%")
   print(f"   평균수용률: {sum(fits)/len(fits)*100:.0f}%")
+
+  print("----------------------------")
+
+  text = "안녕하세요. 반갑습니다."
+  print(tok.tokenize(text))
+  # ['▁안녕하세요', '.', '▁반', '갑', '습니다', '.']
+
+  text1 = "안녕하세요"
+  text2 = "메틸데이트"
+  # 같은 문자갯수라도 모델이 학습이 완료된 단어와 학습이 완료되지 특수 용어의 1토큰당 할당되는 문자의 갯수는 다를수 있다.
+  print("안녕하세요", tok.tokenize(text1))
+  print("메틸데이트", tok.tokenize(text2))
