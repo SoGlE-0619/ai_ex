@@ -17,7 +17,7 @@ hf_logging.set_verbosity_error()
 
 from transformers import AutoTokenizer
 
-from app.config import DB_PATH, EMBED_TOKENIZER
+from app.config import DB_PATH, EMBED_TOKENIZER, EMBED_MAX_TOKENS
 from app.db import query
 
 con = sqlite3.connect(DB_PATH)
@@ -40,8 +40,17 @@ if __name__ == "__main__":
     ORDER BY product_details.product_id
   """)
 
-  print(details)
-  print(len(details))
+  full_tokens = [ntok(detail) for _, _, detail in details]
+  # print("full_tokens", full_tokens)
+
+  # 현재 제품설명중에서 최대 토큰인 512토큰을 넘어가는 글의 토큰수만 다시 리스트로 분류
+  over = [n for n in full_tokens if n > EMBED_MAX_TOKENS ]
+  print(over)
+  print("-----")
+  print(len(over))
+
+  # print(details)
+  # print(len(details))
 
   # details = [
   #    ('P001', "상품명1", "상품1의 엄청 긴 설명"),
