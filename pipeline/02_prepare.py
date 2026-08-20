@@ -132,13 +132,13 @@ con.execute("""
 con.execute("""
   CREATE TABLE chunks (
     chunk_id    INTEGER PRIMARY KEY,
-    section_id  INTEGER NOT NULL,               -- 이 조각의 원문 섹션 (small-to-big 의 실)
+    section_id  INTEGER NOT NULL,               -- 이 조각의 원문 섹션 
     product_id  TEXT NOT NULL,                  -- 조각에도 상품번호를 둔다 (아래 설명)
-    section     TEXT NOT NULL,
+    section     TEXT NOT NULL,                  -- 해당 조각 정보의 원문 출저를 찾기위한 제목
     chunk_index INTEGER NOT NULL,               -- 섹션 안에서 몇 번째 조각인지
-    text        TEXT NOT NULL,   -- 임베딩에 넣는 본문 (접두어 포함)
-    body        TEXT NOT NULL,   -- 접두어를 뺀 원문 조각
-    n_tokens    INTEGER NOT NULL,
+    text        TEXT NOT NULL,                  -- 임베딩에 넣는 본문 (접두어 포함)
+    body        TEXT NOT NULL,                  -- 접두어를 뺀 원문 조각
+    n_tokens    INTEGER NOT NULL,               -- 해당 청킹 데이터의 토큰 수
     FOREIGN KEY (section_id) REFERENCES sections(section_id),
     FOREIGN KEY (product_id) REFERENCES products(product_id)
   )
@@ -194,9 +194,5 @@ con.commit()
 # =============================================
 stored = [n for (n,) in con.execute("SELECT n_tokens FROM chunks")]
 print(f"    sections {len(sections)}행")
-print(f"    chunks {len(rows)}행")
+print(f"    chunks {len(rows)}행  / {dist(stored)}")
 print(f"    상한 ({EMBED_MAX_TOKENS}) 초과: {sum(n > EMBED_MAX_TOKENS for n in stored)}개 \n")
-
-
-
-
