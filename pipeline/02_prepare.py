@@ -170,7 +170,6 @@ section_id_of = {}
 # 유지보수의 편의성을 위해서 실제 DB에 데이터를 저장하기 전에 청킹과 벡터라이징을 미리 끝내놓은 상태
 # 이때 청킹이 완료된 상태이기 때문에 저 2개의 테이블은 연결할 방법이 없음 
 # 이떄 유일한 접점이 (상품아이디와 상품의 섹션 제목) 해당 필드가 공통으로 공유하는 값이 청킹 데이터가 봐라바야될 원본 테이블의 행
-
 for pid, _pname, section, text in sections:
   cur = con.execute(
     "INSERT INTO sections (product_id, section, text, n_tokens) VALUES (?,?,?,?)",
@@ -188,5 +187,16 @@ for pid, pname, section, chunk_index, body in rows:
   )
 
 con.commit()
+
+
+# =============================================
+#  테이블에 저장된 데이터 갯수와 각 청크별 토큰 갯수 확인
+# =============================================
+stored = [n for (n,) in con.execute("SELECT n_tokens FROM chunks")]
+print(f"    sections {len(sections)}행")
+print(f"    chunks {len(rows)}행")
+print(f"    상한 ({EMBED_MAX_TOKENS}) 초과: {sum(n > EMBED_MAX_TOKENS for n in stored)}개 \n")
+
+
 
 
