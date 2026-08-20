@@ -104,9 +104,11 @@ for pid, pname, section, text in sections:
   for i, part in enumerate(parts):
     rows.append((pid, pname, section, i, part))
 
-# ==============================
-#  청킹 데이터가 들어갈 테이블 생성
-# ==============================
+# ===================================
+#  화면에 출력할 원본 데이터테이블,
+#  검색을 위한 청킹 데이터가 들어갈 테이블
+#  청킹데이터의 좌표값이 들어갈 테이블 생성구문
+# ====================================
 con = sqlite3.connect(DB_PATH)
 con.execute("PRAGMA foreign_keys = ON")
 
@@ -121,7 +123,7 @@ con.execute("""
     section_id   INTEGER PRIMARY KEY,  --자동으로 들어가는 값 레코드가 추가될때마다 1씩 자동카운트
     product_id   TEXT NOT NULL,        --어느 상품인지
     section      TEXT NOT NULL,        --'주의사항' 같은 항 섹션별 제목
-    body         TEXT NOT NULL,        --접두어가 붙기전의 원문
+    body         TEXT NOT NULL,        --접두어가 붙기전의 원문 (통짜 원문이 아닌 1차 청킹 이후 제목뒤의 본문)
     n_tokens     INTEGER NOT NULL,     --(필요없을 수도 있음)
     FOREIGN KEY (product_id) REFERENCES products(product_id)
   )
@@ -146,6 +148,36 @@ con.execute("CREATE INDEX idx_chunks_proudct_id ON chunks(product_id)")
 con.execute("CREATE INDEX idx_sections_proudct_id ON chunks(product_id)")
 
 
+# ===================================
+#  테이블에 데이터 저장
+# ====================================
+# sections 테이블에 데이터 저장
+section_id_of = {}
+# {
+#   ("P001","제품설명"):1,
+#   ("P001","주의사항"):2,
+#   ("P001","성분"):3,
+# }
 
+# sections테이블과 chunks 테이블을 조인시키지 않으면 연결시킬수 있는 접점이 없음
+# 2개 테이블에 접점일수 있는 부분은 동일하게 들어가는 컬럼명인 pid, section밖에 없음
+# 저 두개의 값을 키로 활용하는 공통의 접점을 생성
+# section 테이블에서 필드값에 숫자는 무조건 정수인 PK가 지정되어 있기 때문에 공통의 컬럼값을 매칭처리 필요 (pic, section)
 
+for pid, _pname, section, text in sections:
+  cur = con.execute(
+    "INSERT INTO sections (product_id, section, text, n_tokens) VALUES (?,?,?,?),"
+    (pid, section, text, ntok(text)),
+  )
+  section_id_of[(pid, section)] = cur.lastrowid
+
+# chunks 테이블에 데이터 저장
+for pid, pname, section, chunk_index, part in rows:
+  text = with_context(pname, section, part)
+  con.execute("""
+    INSET INTO chunks (section_id, product_id, section, chunk_index, text, body, n_tokens)
+    VALUES (?,?,?,?,?,?,?), (section_id[(pid, section)], pid, section, chunk_index, part, text, ntok(part)  )
+  """)
+
+con.commit();
 
