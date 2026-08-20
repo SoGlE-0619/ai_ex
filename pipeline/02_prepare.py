@@ -123,7 +123,7 @@ con.execute("""
     section_id   INTEGER PRIMARY KEY,  --자동으로 들어가는 값 레코드가 추가될때마다 1씩 자동카운트
     product_id   TEXT NOT NULL,        --어느 상품인지
     section      TEXT NOT NULL,        --'주의사항' 같은 항 섹션별 제목
-    body         TEXT NOT NULL,        --접두어가 붙기전의 원문 (통짜 원문이 아닌 1차 청킹 이후 제목뒤의 본문)
+    text         TEXT NOT NULL,        --접두어가 붙기전의 원문 (통짜 원문이 아닌 1차 청킹 이후 제목뒤의 본문)
     n_tokens     INTEGER NOT NULL,     --(필요없을 수도 있음)
     FOREIGN KEY (product_id) REFERENCES products(product_id)
   )
@@ -131,15 +131,16 @@ con.execute("""
 
 con.execute("""
   CREATE TABLE chunks (
-    chunk_id     INTEGER PRIMARY KEY,   --자동으로 들어가는 각 레코드 PK  
-    section_id   INTEGER NOT NULL,      --해당 청킹된 조각이 바라보는 섹션 테이블 아이디
-    product_id   TEXT NOT NULL,         --해당 청킹된 조각이 바라보는 제품 아이디
-    section      TEXT NOT NULL,         --'주의사항' 같은 항 섹션별 제목
-    text         TEXT NOT NULL,         --접두어가 붙기전의 원문 (검색용도)
-    body         TEXT NOT NULL,         --접두어가 붙은 짤리지 않은 원문 (검색 키워드가 매칭되는 원문 탐색하기 위한)
-    n_tokens     INTEGER NOT NULL,
+    chunk_id    INTEGER PRIMARY KEY,
+    section_id  INTEGER NOT NULL,               -- 이 조각의 원문 섹션 (small-to-big 의 실)
+    product_id  TEXT NOT NULL,                  -- 조각에도 상품번호를 둔다 (아래 설명)
+    section     TEXT NOT NULL,
+    chunk_index INTEGER NOT NULL,               -- 섹션 안에서 몇 번째 조각인지
+    text        TEXT NOT NULL,   -- 임베딩에 넣는 본문 (접두어 포함)
+    body        TEXT NOT NULL,   -- 접두어를 뺀 원문 조각
+    n_tokens    INTEGER NOT NULL,
     FOREIGN KEY (section_id) REFERENCES sections(section_id),
-    FOREIGN KEY (product_id) REFERENCES products(product_id),
+    FOREIGN KEY (product_id) REFERENCES products(product_id)
   )
 """)
 
@@ -179,11 +180,11 @@ for pid, _pname, section, text in sections:
   section_id_of[(pid, section)] = cur.lastrowid
 
 # chunks 테이블에 데이터 저장
-for pid, pname, section, chunk_index, part in rows:
+for pid, pname, section, chunk_index, body in rows:
   text = with_context(pname, section, part)
   con.execute("""
     INSERT INTO chunks (section_id, product_id, section, chunk_index, text, body, n_tokens)
-    VALUES (?,?,?,?,?,?,?)""", (section_id_of[(pid, section)], pid, section, chunk_index, part, text, ntok(part)  ),
+    VALUES (?,?,?,?,?,?,?)""", (section_id_of[(pid, section)], pid, section, chunk_index, text, text, ntok(part)  ),
   )
 
 con.commit()
