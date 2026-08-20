@@ -172,7 +172,7 @@ section_id_of = {}
 
 for pid, _pname, section, text in sections:
   cur = con.execute(
-    "INSERT INTO sections (product_id, section, text, n_tokens) VALUES (?,?,?,?),"
+    "INSERT INTO sections (product_id, section, text, n_tokens) VALUES (?,?,?,?)",
     (pid, section, text, ntok(text)),
   )
   # sections와 chunks 테이블을 연결할 공통의 id값 
@@ -182,7 +182,7 @@ for pid, _pname, section, text in sections:
 for pid, pname, section, chunk_index, part in rows:
   text = with_context(pname, section, part)
   con.execute("""
-    INSET INTO chunks (section_id, product_id, section, chunk_index, text, body, n_tokens)
+    INSERT INTO chunks (section_id, product_id, section, chunk_index, text, body, n_tokens)
     VALUES (?,?,?,?,?,?,?)""", (section_id_of[(pid, section)], pid, section, chunk_index, part, text, ntok(part)  ),
   )
 
