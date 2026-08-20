@@ -121,8 +121,8 @@ con.execute("""
     section_id   INTEGER PRIMARY KEY,  --자동으로 들어가는 값 레코드가 추가될때마다 1씩 자동카운트
     product_id   TEXT NOT NULL,        --어느 상품인지
     section      TEXT NOT NULL,        --'주의사항' 같은 항 섹션별 제목
-    text         TEXT NOT NULL,        --접두어가 붙기전의 원문
-    n_tokens     INTEGER NOT NULL,     --해당 청크 데이터의 토큰수 (미리 세어서 집어넣으면 시간 절약)
+    body         TEXT NOT NULL,        --접두어가 붙기전의 원문
+    n_tokens     INTEGER NOT NULL,     --(필요없을 수도 있음)
     FOREIGN KEY (product_id) REFERENCES products(product_id)
   )
 """)
@@ -133,8 +133,8 @@ con.execute("""
     section_id   INTEGER NOT NULL,      --해당 청킹된 조각이 바라보는 섹션 테이블 아이디
     product_id   TEXT NOT NULL,         --해당 청킹된 조각이 바라보는 제품 아이디
     section      TEXT NOT NULL,         --'주의사항' 같은 항 섹션별 제목
-    text         TEXT NOT NULL,         --접두어가 붙기전의 원문
-    body         TEXT NOT NULL,         --접두어가 붙은 원문
+    text         TEXT NOT NULL,         --접두어가 붙기전의 원문 (검색용도)
+    body         TEXT NOT NULL,         --접두어가 붙은 짤리지 않은 원문 (검색 키워드가 매칭되는 원문 탐색하기 위한)
     n_tokens     INTEGER NOT NULL,
     FOREIGN KEY (section_id) REFERENCES sections(section_id),
     FOREIGN KEY (product_id) REFERENCES products(product_id),
