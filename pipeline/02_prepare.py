@@ -180,10 +180,10 @@ for pid, _pname, section, text in sections:
 
 # chunks 테이블에 데이터 저장
 for pid, pname, section, chunk_index, body in rows:
-  text = with_context(pname, section, part)
+  text = with_context(pname, section, body)
   con.execute("""
     INSERT INTO chunks (section_id, product_id, section, chunk_index, text, body, n_tokens)
-    VALUES (?,?,?,?,?,?,?)""", (section_id_of[(pid, section)], pid, section, chunk_index, text, body, ntok(part)  ),
+    VALUES (?,?,?,?,?,?,?)""", (section_id_of[(pid, section)], pid, section, chunk_index, text, body, ntok(text)  ),
   )
 
 con.commit()
