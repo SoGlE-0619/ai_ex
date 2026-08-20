@@ -55,9 +55,6 @@ SEPERATORS = ["\n\n", "\n", "다", "요", ".", ",", ""]
 # ================================================
 #  청킹할 데이터 원본을 DB 테이블엥서 꺼냄
 # ================================================
-con = sqlite3.connect(DB_PATH)
-con.execute("PRAGMA foreign_keys = ON")
-
 details = query("""
   SELECT product_details.product_id, products.name, product_details.detail
   FROM product_details JOIN products ON product_details.product_id = products.product_id
@@ -105,12 +102,50 @@ for pid, pname, section, text in sections:
     parts = [text]  
 
   for i, part in enumerate(parts):
-    # 제품아이디, 제품명, (주의사항), 순번, 각각의 중제목에 대한 쪼개진 본문내용
     rows.append((pid, pname, section, i, part))
 
+# ==============================
+#  청킹 데이터가 들어갈 테이블 생성
+# ==============================
+con = sqlite3.connect(DB_PATH)
+con.execute("PRAGMA foreign_keys = ON")
+
+# 테이블이 만들어지는 순서는 section -> chunks -> chunk_vectors순이기 때문에
+# 테이블 제거시에는 역순으로 제거
+con.execute("DROP TABLE IF EXISTS chunk_vectors") # 의미추론을 위한 조각들의 좌표값이 들어가는 테이블
+con.execute("DROP TABLE IF EXISTS chunks") # 사용자 요청시 빠르게 문맥에 맞는 키워드를 탐색하기 위한 조각들 저장 테이블 
+con.execute("DROP TABLE IF EXISTS sections") # LLM이 참고해야 되는 원문이 들어가는 테이블
+
+con.execute("""
+  CREATE TABLE sections (
+    section_id   INTEGER PRIMARY KEY,  --자동으로 들어가는 값 레코드가 추가될때마다 1씩 자동카운트
+    product_id   TEXT NOT NULL,        --어느 상품인지
+    section      TEXT NOT NULL,        --'주의사항' 같은 항 섹션별 제목
+    text         TEXT NOT NULL,        --접두어가 붙기전의 원문
+    n_tokens     INTEGER NOT NULL,     --해당 청크 데이터의 토큰수 (미리 세어서 집어넣으면 시간 절약)
+    FOREIGN KEY (product_id) REFERENCES products(product_id)
+  )
+""")
+
+con.execute("""
+  CREATE TABLE chunks (
+    chunk_id     INTEGER PRIMARY KEY,   --자동으로 들어가는 각 레코드 PK  
+    section_id   INTEGER NOT NULL,      --해당 청킹된 조각이 바라보는 섹션 테이블 아이디
+    product_id   TEXT NOT NULL,         --해당 청킹된 조각이 바라보는 제품 아이디
+    section      TEXT NOT NULL,         --'주의사항' 같은 항 섹션별 제목
+    text         TEXT NOT NULL,         --접두어가 붙기전의 원문
+    body         TEXT NOT NULL,         --접두어가 붙은 원문
+    n_tokens     INTEGER NOT NULL,
+    FOREIGN KEY (section_id) REFERENCES sections(section_id),
+    FOREIGN KEY (product_id) REFERENCES products(product_id),
+  )
+""")
+
+# 생성된 테이블의 외래키 컬럼에 index 추가
+con.execute("CREATE INDEX idx_chunks_proudct_id ON chunks(product_id)")
+con.execute("CREATE INDEX idx_sections_proudct_id ON chunks(product_id)")
 
 
-example = next(r for r in rows if r[2] == "주의사항")
 
-print(f" 붙이전: {example[4][:30]}...")
-print(f" 붙인후: {with_context(example[1], example[2], example[4][:30])}...")
+
+
