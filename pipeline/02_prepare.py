@@ -183,7 +183,7 @@ for pid, pname, section, chunk_index, body in rows:
   text = with_context(pname, section, part)
   con.execute("""
     INSERT INTO chunks (section_id, product_id, section, chunk_index, text, body, n_tokens)
-    VALUES (?,?,?,?,?,?,?)""", (section_id_of[(pid, section)], pid, section, chunk_index, text, text, ntok(part)  ),
+    VALUES (?,?,?,?,?,?,?)""", (section_id_of[(pid, section)], pid, section, chunk_index, text, body, ntok(part)  ),
   )
 
 con.commit()
