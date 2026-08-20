@@ -112,9 +112,9 @@ con.execute("PRAGMA foreign_keys = ON")
 
 # 테이블이 만들어지는 순서는 section -> chunks -> chunk_vectors순이기 때문에
 # 테이블 제거시에는 역순으로 제거
-con.execute("DROP TABLE IF EXISTS chunk_vectors")
-con.execute("DROP TABLE IF EXISTS chunks")
-con.execute("DROP TABLE IF EXISTS sections")
+con.execute("DROP TABLE IF EXISTS chunk_vectors") # 의미추론을 위한 조각들의 좌표값이 들어가는 테이블
+con.execute("DROP TABLE IF EXISTS chunks") # 사용자 요청시 빠르게 문맥에 맞는 키워드를 탐색하기 위한 조각들 저장 테이블 
+con.execute("DROP TABLE IF EXISTS sections") # LLM이 참고해야 되는 원문이 들어가는 테이블
 
 con.execute("""
   CREATE TABLE sections (
