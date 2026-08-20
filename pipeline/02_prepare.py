@@ -176,12 +176,12 @@ con.commit()
 #  임베딩이 없을때 데이터 검색의 한계
 # ====================================
 
-q1 = query("SELECT COUNT(*) FROM chunks WHERE body LIKE '%환불%'")
-print("환불",q1)
+# q1 = query("SELECT COUNT(*) FROM chunks WHERE body LIKE '%환불%'")
+# print("환불",q1)
 
-q2 = query("SELECT COUNT(*) FROM chunks WHERE body LIKE '%교환%'")
-print("교환",q2)
+# q2 = query("SELECT COUNT(*) FROM chunks WHERE body LIKE '%교환%'")
+# print("교환",q2)
 
-q3 = query("SELECT COUNT(*) FROM chunks WHERE body LIKE '%반품%'")
-print("반품",q3)
+# q3 = query("SELECT COUNT(*) FROM chunks WHERE body LIKE '%반품%'")
+# print("반품",q3)
 
