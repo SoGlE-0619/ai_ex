@@ -108,11 +108,10 @@ for pid, pname, section, text in sections:
     # 제품아이디, 제품명, (주의사항), 순번, 각각의 중제목에 대한 쪼개진 본문내용
     rows.append((pid, pname, section, i, part))
 
-print(rows)
 
-# 목적에 맞는 청킹 처리 (우리가 청킹을 하는 이유)
-# 데이터 청킹을 짧게 해야할 때 vs 길게 해야할 때
-# - 청킹데이터를 짜르는 이유는 : 사용자가 질문한 맥락에 맞는 자료조각을 탐색하기 위함
-# - 탐색이 완료되면 제일연관도가 높은 조각들을 비교해서 그 조각이 바라보는 원문을 사용자에게 내보내면 됨
-# - 선택된 위의 원문과 사용자 정보를 조합해서 LLM 전달
-# - LLM 제공받은 정보를 통해서 그럴싸한 문장을 만들어내 내보내줌
+
+example = next(r for r in rows if r[2] == "주의사항")
+
+print(f" 붙이전: {example[4][:30]}...")
+print(f" 붙인후: {with_context(example[1], example[2], example[4][:30])}...")
+
