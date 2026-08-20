@@ -164,11 +164,18 @@ section_id_of = {}
 # 저 두개의 값을 키로 활용하는 공통의 접점을 생성
 # section 테이블에서 필드값에 숫자는 무조건 정수인 PK가 지정되어 있기 때문에 공통의 컬럼값을 매칭처리 필요 (pic, section)
 
+# 이렇게 번거롭게 sections테이블과 chunks 테이블을 연결하는 이유
+# 테이블에서 원본 데이터를 꺼낸이후에 청킹을 시작하면 문제가 안되지만
+# 유지보수의 편의성을 위해서 실제 DB에 데이터를 저장하기 전에 청킹과 벡터라이징을 미리 끝내놓은 상태
+# 이때 청킹이 완료된 상태이기 때문에 저 2개의 테이블은 연결할 방법이 없음 
+# 이떄 유일한 접점이 (상품아이디와 상품의 섹션 제목) 해당 필드가 공통으로 공유하는 값이 청킹 데이터가 봐라바야될 원본 테이블의 행
+
 for pid, _pname, section, text in sections:
   cur = con.execute(
     "INSERT INTO sections (product_id, section, text, n_tokens) VALUES (?,?,?,?),"
     (pid, section, text, ntok(text)),
   )
+  # sections와 chunks 테이블을 연결할 공통의 id값 
   section_id_of[(pid, section)] = cur.lastrowid
 
 # chunks 테이블에 데이터 저장
@@ -176,9 +183,9 @@ for pid, pname, section, chunk_index, part in rows:
   text = with_context(pname, section, part)
   con.execute("""
     INSET INTO chunks (section_id, product_id, section, chunk_index, text, body, n_tokens)
-    VALUES (?,?,?,?,?,?,?), (section_id[(pid, section)], pid, section, chunk_index, part, text, ntok(part)  )
-  """)
+    VALUES (?,?,?,?,?,?,?)""", (section_id_of[(pid, section)], pid, section, chunk_index, part, text, ntok(part)  ),
+  )
 
-con.commit();
+con.commit()
 
 
