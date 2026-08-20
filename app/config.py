@@ -52,4 +52,4 @@ vec = emb.embed_query("수분크림")   # 아래가 뭐든 호출 방법은 동�
 EMBED_TOKENIZER = "intfloat/multilingual-e5-small"
 
 # 해당 모델의 최대토큰수가 512인데 전달의 문자정보의 토큰갯수가 넘어설때 512넘어서는 정보값은 짤려서 누락됨
-EMBED_MAX_TOKENS = 200
+EMBED_MAX_TOKENS = 512

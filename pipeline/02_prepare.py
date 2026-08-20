@@ -35,7 +35,7 @@ def ntok(text):
 def dist(values):
    return (f"최소 {min(values)} / 중앙 {int(statistics.median(values))} / 최대 {max(values)}")
 
-CHUNK_SIZE = 100
+CHUNK_SIZE = 324
 CHUNK_OVERLAP = 48
 PREFIX_BUDGET = 32  #접두사 [상품명 > 위치] 본문내용
 RESPLIT_OVER = EMBED_MAX_TOKENS - PREFIX_BUDGET
@@ -96,9 +96,7 @@ if __name__ == "__main__":
     if ntok(text) > RESPLIT_OVER:
       n_resplit +=1
       # 문자열의 리스트로 반환
-      parts = resplitter.split_text(text)    
-      # 2차 청킹시 만들어지는 청크 데이터 갯수 
-      print(len(parts))   
+      parts = resplitter.split_text(text)  
       resplit_log.append((pid, pname, section, ntok(text), parts))
     # 만약 넘치지 않으면 그냥 그대로 저장
     else:
