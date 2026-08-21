@@ -18,8 +18,8 @@ from langchain_text_splitters import MarkdownHeaderTextSplitter, RecursiveCharac
 
 from transformers import AutoTokenizer
 
-from app.config import DB_PATH, EMBED_TOKENIZER, EMBED_MAX_TOKENS
-from app.db import query
+from app.core.config import DB_PATH, EMBED_TOKENIZER, EMBED_MAX_TOKENS
+from app.core.db import query
 
 tok = AutoTokenizer.from_pretrained(EMBED_TOKENIZER)
 
@@ -176,8 +176,8 @@ con.commit()
 #  임베딩이 없을때 데이터 검색의 한계
 # ====================================
 
-# q1 = query("SELECT COUNT(*) FROM chunks WHERE body LIKE '%환불%'")
-# print("환불",q1)
+q1 = query("SELECT COUNT(*) FROM chunks WHERE body LIKE '%환불%'")
+print("환불",q1)
 
 # q2 = query("SELECT COUNT(*) FROM chunks WHERE body LIKE '%교환%'")
 # print("교환",q2)
