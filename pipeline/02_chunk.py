@@ -32,8 +32,7 @@ disable_progress_bars()
 
 from app.core.config import DB_PATH, EMBED_MAX_TOKENS, EMBED_TOKENIZER
 from pipeline.prep import chunking, storage
-from pipeline.prep.options import (CHUNK_OVERLAP, CHUNK_SIZE, PREFIX_BUDGET,
-                                   RESPLIT_OVER)
+from pipeline.prep.options import (CHUNK_OVERLAP, CHUNK_SIZE, PREFIX_BUDGET, RESPLIT_OVER)
 
 con = sqlite3.connect(DB_PATH)
 con.execute("PRAGMA foreign_keys = ON")
