@@ -41,3 +41,6 @@ print(counts)
 # 고객별 후기갯수 구하기
 buys = sorted(len(v) for v in history.values()) 
 print(buys)
+
+# 고객 평균후기 하나당 얼마의 토큰이 소비되는지 확인
+print(sum(counts) / sum(buys)) # 구매후기 하나당 평균 토큰 갯수는 40개
