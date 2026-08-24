@@ -137,10 +137,12 @@ VARIANTS = [
 # ===============================================================
 # 5. 위에서 람다식으로 등록한 프리셋 함수를 반복돌면서 고객정보 청킹 데이터를 추출
 # ===============================================================
-# 위의 variants값을 이용해서 해당 프리셋을 반복돌면서 각 결과정보를 문자열로 출력 (미션 : 30분까지 테스트)
+# 위의 variants값을 이용해서 해당 프리셋을 반복돌면서 각 결과정보를 문자열로 출력 
 for label, func in VARIANTS: 
-    # cids에 고객의 id값이 리스트 형태로 들어가 있음
-    print(f"{label}: {func("C002")}")
-    print()
+    # 모든 고객아이디를 반복돌면서 위의 4가지 프리셋별로 임베딩할 청킹 데이터를 받음
+    texts = [ func(c) for c in cids]
 
+    # 위의 데이터를 임베딩처리 (벡터화)
+    customer_vectors = np.array(model.embed_documents(texts), dtype="float32")
+    print(customer_vectors)
 
