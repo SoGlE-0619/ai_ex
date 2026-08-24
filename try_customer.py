@@ -21,5 +21,11 @@ for cid, name, rating, review in con.execute("""
     history.setdefault(cid, []).append(f"{name} (별점 {rating} {review})")
 
 
-
 print("history", history["C002"])
+"""
+C002 고객에 대한 후기 리스트
+[
+    '세라마이드 브라이트닝 클렌징폼 (별점 5 고민하다 샀는데 잘 산 것 같아요. 향이 세지 않아서 좋아요.)', 
+    '히알루론산 링클 클렌징폼 (별점 5 친구가 좋다고 해서 샀는데 만족해요. 건성인데 자극 없이 잘 썼어요.)'
+]
+""" 
