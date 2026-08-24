@@ -91,6 +91,32 @@ print("002고객 정답을 제외한 구매상품", bought["C002"])
 # 고객별 구매 이력중 인기 상품 구매 이력이 있는 고객 아이디를 리스트로 반환
 # history(고객의 구매 내역) 과 hits_product(인기상품 구매내역)을 비교해서 각 레코드의 공통의 cid(고객 아이디)를 비교하면
 # 결국 인기상품을 구매한 고객정보 목록을 확인 가능
-# 고객의 구매내열을 반복돌면서 해당고객 아이디가 인기상품 구매목록 아이디와 겹치는 정보만 추출
+# 고객의 구매내역을 반복돌면서 해당고객 아이디가 인기상품 구매목록 아이디와 겹치는 정보만 추출
 cids = [c for c in sorted(history) if c in hits_product]
 print(len(cids))
+
+# 리스트에사 특정 값의 갯수를 카운트에서 가장 많이 나온 value값을 상위 n번째까지 반환해주는 함수
+def top(items, n=3):
+    # 리스트에 각 값의 갯수를 카운트해서 가장 많이 나온값의 상위 n번째 값까지 반환하는 함수
+    return "/".join(x for x, _ in Counter(items).most_common(n))
+
+
+# 인자로 전달받은 고객아이디를 통해서 해당 고객의 구매이력을 선호도와 함께 반환하는 함수
+def taste(cid):
+    h = history[cid]
+
+    #특정 고객의 구매이력에서 별점만 모두 더한뒤, 해당 별점의 총합을 구매 건수로 나면 해당 고객의 평균 별점 반환
+    avg = sum(x[4] for x in h) / len(h)
+
+    # 고객의 피부타입과 구매이력에서 자주 등장한 항목들을 추출해서 하나의 소개 문장으로 만든다.
+    # customer_info[cid][2]: 고객의 피부타입
+
+    # 해당 고객이 제일 많이 구매한 제품 카테고리 명이 반환
+    skin_type = customer_info[cid][2] # 해당 사용자의 스킨 타입
+    t_category = top(x[1] for x in h) # 해당 사용자가 구매한 제품중 가장 많이 언급된 제품 카테고리 명
+    t_ingredient = top(x[2] for x in h) # 해당 사용자가 구매한 제품중 가장 많이 언급된 성분명
+    t_concern = top(x[3] for x in h)
+
+    return (f"스킨타입:{skin_type} / 선호제품 카테고리: {t_category} / 선호 성분: {t_ingredient} / 주요관심사: {t_concern} ")
+
+print("특정 고객 취향 분석 문장", taste("C002"))
