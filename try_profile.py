@@ -23,7 +23,7 @@ product_rows = con.execute("""
 # ===============================================
 # 상품 아이디만 리스트로 반환
 product_ids = [r[0] for r in product_rows]
-print(product_ids)
+# print(product_ids)
 
 # 상품 아이디를 제외한 나머지 상품정보를 하나의 문자열로 묶어서 리스트로 반환
 # 반환된 각각의 리스트를 벡터화 처리
@@ -34,7 +34,7 @@ product_vectors = np.array(model.embed_documents(
 ]
 ), dtype="float32") 
 
-print(product_vectors[0])
+# print(product_vectors[0])
 
 # ===============================================
 # 2. 고객id별 기본정보 분리해서 가져옴
@@ -50,8 +50,8 @@ print(product_vectors[0])
 # 기본 고객 정보를 가져옴 (이때 고객아이디와, 나머지 고객정보를 분리해서 저장)
 customer_rows = con.execute("SELECT customer_id, age, gender, skin_type, city FROM customers")
 customer_info = {c: r for c, *r in customer_rows}
-print(customer_info["C002"])
-print("-------")
+# print(customer_info["C002"])
+# print("-------")
 
 # ===============================================
 # 3. 고객별 구매 이력을 가져와서 딕서녀리 형태로 카테고라이징
@@ -68,7 +68,7 @@ for cid, name, cat, ing, concern, rating, review in con.execute("""
     history.setdefault(cid,[]).append((name, cat, ing, concern, rating, review))
 
 # ("고객아이디", [제품명, 카테고리명, 성분, 피부걱정, 별점, 리뷰])
-print(history["C002"])
+# print(history["C002"])
 
 # 지금까지 찾아놓은 고객별 구매 정보를 반환받음
 
@@ -116,7 +116,7 @@ def taste(cid):
 
     return (f"스킨타입:{skin_type} / 선호제품 카테고리: {t_category} / 선호 성분: {t_ingredient} / 주요관심사: {t_concern} / 평균별점: {avg:.1f} ")
 
-print("특정 고객 취향 분석 문장", taste("C002"))
+# print("특정 고객 취향 분석 문장", taste("C002"))
 
 
 
@@ -144,5 +144,20 @@ for label, func in VARIANTS:
 
     # 위의 데이터를 임베딩처리 (벡터화)
     customer_vectors = np.array(model.embed_documents(texts), dtype="float32")
-    print(customer_vectors)
+    # print(customer_vectors)
+
+    # product_vectors(제품정보 벡터화),  customer_vectors(고객정보 백터화)
+    # 특정 고객 맞춤 정보를 비교하기 위해서는 모든고객--> 특정고객의 정보를 비해서 코사인유사도가 제일 높은 제품 찾기
+
+    # hit@1, hit@3, hit@5
+    hits = [0, 0, 0]
+
+    # 고객별 순번과 고객 id하나씩 가져와서 코사인유사도로 추천 제품 목록 줄세우기
+    for i, cid in enumerate(cids):
+        # order에는 각각의 고객정보와 제품 정보를 비교해서 오름차순으로 목록 정렬
+        # 해당 order값을 음수처리해서 내림차순으로 목록 정렬
+        # 리스트 제일 앞에있는 값이 제일 유사도가 높은 순으로 순서가 정렬
+        order = np.argsort( -(product_vectors @ customer_vectors[i]))
+
+        print(order)
 
