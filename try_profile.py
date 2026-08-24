@@ -82,7 +82,15 @@ hits_product = dict(con.execute("SELECT customer_id, product_id FROM purchases W
 # 고객아이디별로 구매한 제품명이 등록될 빈 딕셔너리
 bought = {}
 for cid, pid in con.execute("SELECT customer_id, product_id FROM purchases WHERE is_holdout=0"):
+    # 고객 특정 제품을 반복해서 샀더라도  반복된 제품아이디를 중복처리하지 않고 출력하기 위함
     bought.setdefault(cid, set()).add(pid)
 
 print("002고객의 정답상품", hits_product["C002"])
 print("002고객 정답을 제외한 구매상품", bought["C002"])
+
+# 고객별 구매 이력중 인기 상품 구매 이력이 있는 고객 아이디를 리스트로 반환
+# history(고객의 구매 내역) 과 hits_product(인기상품 구매내역)을 비교해서 각 레코드의 공통의 cid(고객 아이디)를 비교하면
+# 결국 인기상품을 구매한 고객정보 목록을 확인 가능
+# 고객의 구매내열을 반복돌면서 해당고객 아이디가 인기상품 구매목록 아이디와 겹치는 정보만 추출
+cids = [c for c in sorted(history) if c in hits_product]
+print(len(cids))
