@@ -33,3 +33,10 @@ EMBED_MODEL = "intfloat/multilingual-e5-small"
 #    그래서 경로가 틀려도 오류가 안 난다. 죽이지는 않고 경로만 눈에 보이게 한다
 if not Path(DB_PATH).exists():
     print(f"알림: DB 가 아직 없다 -> {DB_PATH}")
+
+# 이 모델이 한 문장을 몇 개의 실수로 바꾸는가. 표를 만들 때와 점검할 때 쓴다
+EMBED_DIM = 384
+
+# 벡터를 문자로 적을 때 소수점 몇 자리까지 쓸까.
+# 자릿수를 그대로 두면 파일이 두 배가 된다. 얼마나 손해인지는 5교시에 직접 잰다
+EMBED_DECIMALS = 6
