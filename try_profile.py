@@ -69,3 +69,20 @@ for cid, name, cat, ing, concern, rating, review in con.execute("""
 
 # ("고객아이디", [제품명, 카테고리명, 성분, 피부걱정, 별점, 리뷰])
 print(history["C002"])
+
+# 지금까지 찾아놓은 고객별 구매 정보를 반환받음
+
+# ===============================================
+# 4. 고객별 인기 구매 상품 비교
+# ===============================================
+# is_holdout=1로 숨겨놓은 제품을 위의 정보와 비교하면서 해당고객이 구매한 제품중 인기 제품이 얼마나 많이 있는지 비교
+# 해당 고객이 구매한 항목중 인기상품 항목만 가져옴 (이고객의 취향 비교를 위해 이고객의 정답 제품만 가져옴)
+hits_product = dict(con.execute("SELECT customer_id, product_id FROM purchases WHERE is_holdout=1"))
+
+# 고객아이디별로 구매한 제품명이 등록될 빈 딕셔너리
+bought = {}
+for cid, pid in con.execute("SELECT customer_id, product_id FROM purchases WHERE is_holdout=0"):
+    bought.setdefault(cid, set()).add(pid)
+
+print("002고객의 정답상품", hits_product["C002"])
+print("002고객 정답을 제외한 구매상품", bought["C002"])
