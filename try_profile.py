@@ -157,7 +157,10 @@ for label, func in VARIANTS:
         # order에는 각각의 고객정보와 제품 정보를 비교해서 오름차순으로 목록 정렬
         # 해당 order값을 음수처리해서 내림차순으로 목록 정렬
         # 리스트 제일 앞에있는 값이 제일 유사도가 높은 순으로 순서가 정렬
+        # order에는 각 고객정보에 제일 근접한 벡터화된 리스트 순서가 등록되어 있을테니까
         order = np.argsort( -(product_vectors @ customer_vectors[i]))
 
-        print(order)
+        # 위에서 구한 유사도와 근접한 벡터정보 순번을 다시 매칭되는 제품 아이디로 변환해서 ranked란 리스트에 담아줌
+        ranked = [ product_ids[j] for j in order]
+        print(ranked)
 
