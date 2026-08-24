@@ -29,3 +29,15 @@ C002 고객에 대한 후기 리스트
     '히알루론산 링클 클렌징폼 (별점 5 친구가 좋다고 해서 샀는데 만족해요. 건성인데 자극 없이 잘 썼어요.)'
 ]
 """ 
+# 각 고객마다의 여러개후기를 하나의 문자열로 묶어서 반환
+joined = [" ".join(v) for v in history.values()]
+print(len(joined)) # 300 
+
+# 고객당 이어붙인 후기를 토큰갯수로 변환해서 올림차순으로 순서 정려
+# 고객 후기당 토큰 개수 파악용 (어느 고객의 후기정보에 대한 토큰량이 많은지 확인 용도)
+counts = sorted(len(tok.encode(t)) for t in joined)
+print(counts)
+
+# 고객별 후기갯수 구하기
+buys = sorted(len(v) for v in history.values()) 
+print(buys)
