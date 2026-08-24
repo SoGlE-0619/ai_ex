@@ -117,6 +117,6 @@ def taste(cid):
     t_ingredient = top(x[2] for x in h) # 해당 사용자가 구매한 제품중 가장 많이 언급된 성분명
     t_concern = top(x[3] for x in h)
 
-    return (f"스킨타입:{skin_type} / 선호제품 카테고리: {t_category} / 선호 성분: {t_ingredient} / 주요관심사: {t_concern} ")
+    return (f"스킨타입:{skin_type} / 선호제품 카테고리: {t_category} / 선호 성분: {t_ingredient} / 주요관심사: {t_concern} / 평균별점: {avg:.1f} ")
 
 print("특정 고객 취향 분석 문장", taste("C002"))
