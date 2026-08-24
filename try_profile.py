@@ -161,6 +161,22 @@ for label, func in VARIANTS:
         order = np.argsort( -(product_vectors @ customer_vectors[i]))
 
         # 위에서 구한 유사도와 근접한 벡터정보 순번을 다시 매칭되는 제품 아이디로 변환해서 ranked란 리스트에 담아줌
-        ranked = [ product_ids[j] for j in order]
+        # 고객의 id는 있는데 구매한 이력이 없으면 반복도는 리스트 갯수와 매칭안되니 에러남
+        # order값 반복돌때 현재 구매목록에서 cid가 없는 데이터행은 제외하고 반복돌기
+        ranked = [ product_ids[j] for j in order if product_ids[j] not in bought.get(cid, ())]
         print(ranked)
+
+        # 추천 목록에서 상위1개, 상위3개, 상위 5개에 정답상품이 있는지 차례로 확인
+        # 만약 정답상품이 있으면 hits 리스트에 값을 1씩 카운트에서 증가처리
+        for slot, k in enumerate((1,3,5)):
+            # slot -> 0,1,2 현재 반복도는 순번
+            # K -> 1,3,5 추천 유사도 목록에서 짜를 목록 갯수
+            # 각 cid 고객의 추천 제품 아이디를 반복돌면서 정답 상품아이디가 해당 추천목록에 있으면 1씩 카운트
+            hits[slot] += hits_product[cid] in ranked[:k]
+
+            #hits[0] --> 고객에게 추천된 첫번째 목록에 정답상품이 포함되어 있으면 값 카운트
+            #hits[1] --> 고객에게 추천된 새개의 목록중에 정답상품이 포함되어 있으면 해당 값 카운트
+            #hits[2] --> 고객에게 추천된 5개의 목록중에 정답상품이 포함되어 있으면 해당 값 카운트
+
+            # hits =[3, 8, 10]: 전체 고객 상품 추천항목에서 1순위로 추천된 제품의 갯수, 3개 추천항목에서 정답제품의 갯수, 5개의 상위 추천 항목에 정답이 있을경우 세번째 리스트에 카운트
 
