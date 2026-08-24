@@ -51,3 +51,21 @@ print(product_vectors[0])
 customer_rows = con.execute("SELECT customer_id, age, gender, skin_type, city FROM customers")
 customer_info = {c: r for c, *r in customer_rows}
 print(customer_info["C002"])
+print("-------")
+
+# ===============================================
+# 3. 고객별 구매 이력을 가져와서 딕서녀리 형태로 카테고라이징
+# ===============================================
+history = {}
+
+for cid, name, cat, ing, concern, rating, review in con.execute("""
+    SELECT purchases.customer_id, products.name, products.category, products.ingredient, products.concern, 
+    purchases.rating, purchases.review
+    FROM purchases JOIN products ON products.product_id = purchases.product_id
+    WHERE purchases.is_holdout = 0
+    ORDER BY purchases.customer_id, purchases.purchase_id
+"""):
+    history.setdefault(cid,[]).append((name, cat, ing, concern, rating, review))
+
+# ("고객아이디", [제품명, 카테고리명, 성분, 피부걱정, 별점, 리뷰])
+print(history["C002"])
