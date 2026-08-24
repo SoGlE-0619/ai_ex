@@ -12,7 +12,7 @@ model = HuggingFaceEmbeddings(
     encode_kwargs={"normalize_embeddings": True, "batch_size": 64}
 )
 
-rows = con.execute("""
+product_rows = con.execute("""
     SELECT product_id, name, brand, category, price, skin_type, ingredient, concern, tags, description 
     FROM products ORDER BY product_id
 """).fetchall()
@@ -22,16 +22,32 @@ rows = con.execute("""
 # 1. 상품아이디 리스트, 상품아이디별 벡터화할 상품정보 리스트
 # ===============================================
 # 상품 아이디만 리스트로 반환
-pids = [r[0] for r in rows]
-print(pids)
+product_ids = [r[0] for r in product_rows]
+print(product_ids)
 
 # 상품 아이디를 제외한 나머지 상품정보를 하나의 문자열로 묶어서 리스트로 반환
 # 반환된 각각의 리스트를 벡터화 처리
 product_vectors = np.array(model.embed_documents(
 [
     " / ".join(str(x) for x in r[1:]) # 첫번재 제품아이디를 제외한 나머지 값들을 문자화 시킨뒤 하나의 문자열로 이어붙임
-    for r in rows # 각레코드를 하나씩 추출해서 
+    for r in product_rows # 각레코드를 하나씩 추출해서 
 ]
 ), dtype="float32") 
 
 print(product_vectors[0])
+
+# ===============================================
+# 2. 고객id별 기본정보 분리해서 가져옴
+# ===============================================
+# [c, *r in 리스트]
+# [
+#     ("C001", 25, "여성", "건성", "서울"), 
+#     ("C001", 25, "여성", "건성", "서울"), 
+# ]
+# [
+#     ("C001","나머지값")
+# ]
+# 기본 고객 정보를 가져옴 (이때 고객아이디와, 나머지 고객정보를 분리해서 저장)
+customer_rows = con.execute("SELECT customer_id, age, gender, skin_type, city FROM customers")
+customer_info = {c: r for c, *r in customer_rows}
+print(customer_info["C002"])
