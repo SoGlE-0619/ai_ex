@@ -19,4 +19,3 @@ if not Path(DB_PATH).exists():
     print(f"알림: DB 가 아직 없다 -> {DB_PATH}")
 
 
-
