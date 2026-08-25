@@ -3,7 +3,7 @@
 DB 없이는 한 줄도 못 돈다. 여럿을 엮어야 일이 되는 파일이라 features/ 에 둔다.
 """
 
-# 🔴 오늘 바뀐 줄 ― 어제까지는  from app.db import dicts, one  였다
+# 오늘 바뀐 줄 ― 어제까지는  from app.db import dicts, one  였다
 from app.core.db import dicts, one
 
 
