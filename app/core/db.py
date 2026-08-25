@@ -50,3 +50,4 @@ if __name__ == "__main__":
     print("상품 수:", one("SELECT COUNT(*) FROM products")[0])
     for row in dicts("SELECT name, age FROM customers LIMIT 3"):
         print(f"  {row['name']} ({row['age']}세)")
+
