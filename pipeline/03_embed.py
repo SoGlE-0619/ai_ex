@@ -139,7 +139,7 @@ targets["review"] = ("purchase_id", "purchases", [x[0] for x in r], [x[1] for x 
 # 3단계. 네 종류의 ID와 검색용 텍스트가 준비되었는지 확인
 # ============================================================
 # targets에는 chunk, product, customer, review 정보가 준비되어 있다.
-print(f"  임베딩할 데이터 준비: {', '.join(targets)}")
+print("임베딩용문장확인 : ",f"  임베딩할 데이터 준비: {', '.join(targets)}")
 
 
 
@@ -151,6 +151,9 @@ print(f"  임베딩할 데이터 준비: {', '.join(targets)}")
 started = time.perf_counter()
 
 # 임베딩 모델을 미리 불러와 사용할 준비
+# 실제 get_embedding함수는 core 폴더 안쪽의 embedder.py에 있지만
+# embeddings.py 자체가 해당 임베더 자체를 import해서 참조시키기 때문에
+# 아래구문으로 임베더기 호출 가능
 embedding.get_embeddings()
 
 # 모델 준비에 걸린 시간을 출력한다.
